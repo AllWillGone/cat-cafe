@@ -1,9 +1,10 @@
 """猫咪模块 — 猫咪列表/详情/管理员CRUD"""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from database import get_db
-from models import Catinformation, User
+from models import Catinformation, User, Likes
 from schemas import CatCreate, CatUpdate, CatResponse, PaginatedCats
 from auth import get_current_admin
 
@@ -11,24 +12,76 @@ router = APIRouter(prefix="/api", tags=["猫咪模块"])
 
 
 @router.get("/cats", response_model=PaginatedCats)
-def list_cats(skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
-    """公开接口 — 查看猫咪列表，只返回在岗(status=1)的猫咪"""
-    q = db.query(Catinformation).filter(Catinformation.status == 1)  # WHERE status = 1，过滤休息中的猫
-    total = q.count()                        # SELECT COUNT(*) 获取总数（分页用）
-    cats = q.order_by(Catinformation.catId.desc()).offset(skip).limit(limit).all()  # 降序 + 偏移 + 限量 → 分页查询
-    return PaginatedCats(
-        total=total,
-        items=[CatResponse.model_validate(c) for c in cats],  # 列表推导式：把每个 ORM 对象转成响应模型
-    )
+def list_cats(keyword: str | None = None, skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
+    """公开接口 — 查看猫咪列表，只返回在岗(status=1)的猫咪，支持关键字搜索"""
+    q = db.query(Catinformation).filter(Catinformation.status == 1)
+    if keyword:
+        like = f"%{keyword}%"
+        q = q.filter(
+            Catinformation.catName.like(like)
+            | Catinformation.breed.like(like)
+            | Catinformation.personality.like(like)
+        )
+    total = q.count()
+    cats = q.order_by(Catinformation.catId.desc()).offset(skip).limit(limit).all()
+
+    # 批量查询点赞数
+    cat_ids = [c.catId for c in cats]
+    counts = {}
+    if cat_ids:
+        rows = db.query(Likes.objectId, func.count(Likes.likeId)).filter(
+            Likes.likeType == 2, Likes.objectId.in_(cat_ids)
+        ).group_by(Likes.objectId).all()
+        counts = dict(rows)
+
+    items = []
+    for c in cats:
+        d = CatResponse.model_validate(c)
+        d.likeCount = counts.get(c.catId, 0)
+        items.append(d)
+    return PaginatedCats(total=total, items=items)
 
 
 @router.get("/cats/{cat_id}", response_model=CatResponse)
 def get_cat(cat_id: int, db: Session = Depends(get_db)):
     """公开接口 — 查看单只猫咪详情，不限制 status"""
-    cat = db.query(Catinformation).filter(Catinformation.catId == cat_id).first()  # first() 查到返回对象，查不到返回 None
+    cat = db.query(Catinformation).filter(Catinformation.catId == cat_id).first()
     if not cat:
         raise HTTPException(status_code=404, detail="猫咪不存在")
-    return cat  # 框架自动按 response_model 转成 CatResponse
+    like_count = db.query(func.count(Likes.likeId)).filter(
+        Likes.likeType == 2, Likes.objectId == cat_id
+    ).scalar()
+    resp = CatResponse.model_validate(cat)
+    resp.likeCount = like_count or 0
+    return resp
+
+
+@router.get("/admin/cats", response_model=PaginatedCats)
+def admin_list_cats(
+    status: int | None = None,
+    keyword: str | None = None,
+    skip: int = 0,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin),
+):
+    """管理员查看所有猫咪 — 可按状态筛选，关键字搜猫名/品种/性格"""
+    q = db.query(Catinformation)
+    if status is not None:
+        q = q.filter(Catinformation.status == status)
+    if keyword:
+        like = f"%{keyword}%"
+        q = q.filter(
+            Catinformation.catName.like(like)
+            | Catinformation.breed.like(like)
+            | Catinformation.personality.like(like)
+        )
+    total = q.count()
+    cats = q.order_by(Catinformation.catId.desc()).offset(skip).limit(limit).all()
+    return PaginatedCats(
+        total=total,
+        items=[CatResponse.model_validate(c) for c in cats],
+    )
 
 
 @router.post("/admin/cats", response_model=CatResponse)

@@ -25,6 +25,8 @@ class User(Base):
     userType     = Column(Integer, nullable=False, default=0)
     gender       = Column(Integer, nullable=True)
     birthday     = Column(Date, nullable=True)
+    userPhone    = Column(String(20), nullable=True)
+    userAvatar   = Column(String(255), nullable=True)
     registerTime = Column(DateTime, nullable=False, server_default=func.now())
 
     # relationship: ORM 层面的关联，不是数据库字段

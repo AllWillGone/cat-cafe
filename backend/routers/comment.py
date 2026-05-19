@@ -2,8 +2,10 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
+from sqlalchemy import func
+
 from database import get_db
-from models import Comment, User, Product, Catinformation
+from models import Comment, User, Product, Catinformation, Likes
 from schemas import CommentCreate, CommentAudit, CommentResponse, PaginatedComments
 from auth import get_current_user, get_current_admin
 
@@ -23,17 +25,17 @@ def _resolve_target(targetType: int, targetId: int, db: Session) -> str | None:
     return None                                             # 无效的 targetType
 
 
-def _make_comment_response(c: Comment) -> CommentResponse:
-    """将 ORM 对象转为响应模型，补齐 userName（通过 relationship 链式获取）"""
+def _make_comment_response(c: Comment, likeCount: int = 0) -> CommentResponse:
     return CommentResponse(
         commentId=c.commentId,
         targetType=c.targetType,
         targetId=c.targetId,
         userId=c.userId,
-        userName=c.user.userName if c.user else None,       # relationship: comment.user → User 对象 → userName
+        userName=c.user.userName if c.user else None,
         content=c.content,
         publishTime=c.publishTime,
         auditStatus=c.auditStatus,
+        likeCount=likeCount,
     )
 
 
@@ -75,10 +77,20 @@ def list_comments(
     if targetType is not None and targetId is not None:     # 两个筛选条件同时传入才生效
         q = q.filter(Comment.targetType == targetType, Comment.targetId == targetId)
     total = q.count()
-    comments = q.order_by(Comment.publishTime.desc()).offset(skip).limit(limit).all()  # 最新评论在前
+    comments = q.order_by(Comment.publishTime.desc()).offset(skip).limit(limit).all()
+
+    # 批量查询评论点赞数
+    comment_ids = [c.commentId for c in comments]
+    like_counts = {}
+    if comment_ids:
+        rows = db.query(Likes.objectId, func.count(Likes.likeId)).filter(
+            Likes.likeType == 1, Likes.objectId.in_(comment_ids)
+        ).group_by(Likes.objectId).all()
+        like_counts = dict(rows)
+
     return PaginatedComments(
         total=total,
-        items=[_make_comment_response(c) for c in comments],
+        items=[_make_comment_response(c, like_counts.get(c.commentId, 0)) for c in comments],
     )
 
 
@@ -98,6 +110,50 @@ def audit_comment(
     db.refresh(comment)
     return _make_comment_response(comment)
 
+
+# ── 管理员评论管理 ──
+
+@router.get("/admin/comments", response_model=PaginatedComments)
+def admin_list_comments(
+    auditStatus: int | None = None,
+    keyword: str | None = None,
+    skip: int = 0,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin),
+):
+    """管理员查看所有评论 — 可按审核状态筛选，keyword 同时搜用户名+评论ID+评论内容"""
+    q = db.query(Comment)
+    if auditStatus is not None:
+        q = q.filter(Comment.auditStatus == auditStatus)
+    if keyword is not None:
+        # 纯数字 → 同时按评论ID精确匹配
+        if keyword.isdigit():
+            q = q.join(Comment.user).filter(
+                (Comment.commentId == int(keyword))
+                | User.userName.like(f"%{keyword}%")
+                | Comment.content.like(f"%{keyword}%")
+            )
+        else:
+            q = q.join(Comment.user).filter(
+                User.userName.like(f"%{keyword}%")
+                | Comment.content.like(f"%{keyword}%")
+            )
+    total = q.count()
+    comments = q.order_by(Comment.publishTime.desc()).offset(skip).limit(limit).all()
+
+    comment_ids = [c.commentId for c in comments]
+    like_counts = {}
+    if comment_ids:
+        rows = db.query(Likes.objectId, func.count(Likes.likeId)).filter(
+            Likes.likeType == 1, Likes.objectId.in_(comment_ids)
+        ).group_by(Likes.objectId).all()
+        like_counts = dict(rows)
+
+    return PaginatedComments(
+        total=total,
+        items=[_make_comment_response(c, like_counts.get(c.commentId, 0)) for c in comments],
+    )
 
 @router.delete("/comments/{comment_id}")
 def delete_comment(

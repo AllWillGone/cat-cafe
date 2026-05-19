@@ -20,11 +20,13 @@ class UserRegister(BaseModel):
     """注册请求"""
     userName:     str = Field(min_length=1, max_length=50, description="用户名")
     userPassword: str = Field(min_length=6, max_length=128, description="密码")
+    userPhone:    str | None = Field(None, max_length=20, description="手机号")
 
 
 class UserLogin(BaseModel):
-    """登录请求"""
-    userName:     str = Field(min_length=1, max_length=50)
+    """登录请求 — 用户名或手机号"""
+    userName:     str | None = Field(None, min_length=1, max_length=50)
+    userPhone:    str | None = Field(None, min_length=1, max_length=20)
     userPassword: str = Field(min_length=1, max_length=128)
 
 
@@ -58,6 +60,8 @@ class UserDetailResponse(BaseModel):
     userType: int
     gender: int | None
     birthday: date | None
+    userPhone: str | None
+    userAvatar: str | None
     registerTime: datetime
 
 
@@ -66,6 +70,8 @@ class UserUpdate(BaseModel):
     userName: str | None = Field(None, min_length=1, max_length=50)
     gender: int | None = Field(None, ge=1, le=2)
     birthday: date | None = None
+    userPhone: str | None = Field(None, max_length=20)
+    userAvatar: str | None = Field(None, max_length=255)
 
 
 class UserPasswordChange(BaseModel):
@@ -75,8 +81,20 @@ class UserPasswordChange(BaseModel):
 
 
 class UserResetPassword(BaseModel):
-    """找回密码"""
+    """找回密码 — 用户名"""
     userName: str = Field(min_length=1, max_length=50)
+    newPassword: str = Field(min_length=6, max_length=128)
+
+
+class SendSmsCodeRequest(BaseModel):
+    """发送短信验证码"""
+    userPhone: str = Field(min_length=11, max_length=20)
+
+
+class UserResetPasswordByPhone(BaseModel):
+    """找回密码 — 手机号 + 验证码"""
+    userPhone: str = Field(min_length=1, max_length=20)
+    code: str = Field(min_length=6, max_length=6)
     newPassword: str = Field(min_length=6, max_length=128)
 
 
@@ -88,7 +106,18 @@ class AdminUserListItem(BaseModel):
     userName: str
     userType: int
     gender: int | None
+    userPhone: str | None
+    userAvatar: str | None
     registerTime: datetime
+
+
+class AdminUserUpdate(BaseModel):
+    """管理员编辑用户信息 — 全部可选"""
+    userName: str | None = Field(None, min_length=1, max_length=50)
+    gender: int | None = Field(None, ge=1, le=2)
+    birthday: date | None = None
+    userPhone: str | None = Field(None, max_length=20)
+    userAvatar: str | None = Field(None, max_length=255)
 
 
 class PaginatedUsers(BaseModel):
@@ -132,6 +161,7 @@ class CatResponse(BaseModel):
     personality: str
     photoUrl: str
     notes: str
+    likeCount: int = 0
 
 
 class PaginatedCats(BaseModel):
@@ -176,6 +206,7 @@ class ProductResponse(BaseModel):
     description: str | None
     status: int
     createTime: datetime
+    likeCount: int = 0
 
 
 class PaginatedProducts(BaseModel):
@@ -208,6 +239,7 @@ class CommentResponse(BaseModel):
     content: str
     publishTime: datetime
     auditStatus: int
+    likeCount: int = 0
 
 
 class PaginatedComments(BaseModel):
@@ -235,6 +267,8 @@ class LikeResponse(BaseModel):
     linkUrl: str | None
     createTime: datetime
     objectName: str | None = None
+    targetType: int | None = None
+    targetId: int | None = None
 
 
 class PaginatedLikes(BaseModel):

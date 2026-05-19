@@ -19,53 +19,63 @@ uvicorn main:app --reload
 - config.py — 读 .env 拼连接串 + JWT 配置
 - auth.py — JWT token 签发 + get_current_user + get_current_admin
 - routers/ — 按模块拆分的路由文件
-  - user.py — 用户模块（9 接口）
-  - cat.py — 猫咪模块（5 接口）
-  - product.py — 商品模块（5 接口）
-  - comment.py — 评论模块（4 接口）
+  - user.py — 用户模块（12 接口）
+  - cat.py — 猫咪模块（6 接口）
+  - product.py — 商品模块（7 接口）
+  - comment.py — 评论模块（5 接口）
   - likes.py — 点赞模块（3 接口）
-  - order.py — 订单模块（5 接口）
+  - order.py — 订单模块（6 接口）
 - .env — 数据库密码 + JWT 密钥（Git 不上传）
+- .env.example — 本地 .env 模板，不含真实密码
 - .venv/ — 虚拟环境（Git 不上传）
 
-## 已完成接口（31/31 ✅）
+## 当前接口总览（39 个 /api 接口，不含 /health）
 
-### 用户模块（9/9 ✅）
+Web 整合后接口已扩展；最新数量以代码、`/docs` 和 `docs/开发日志2.md` 附件为准。
+
+### 用户模块（12/12 ✅）
 | 方法 | 路径 | 状态 |
 |------|------|------|
 | POST | /api/register | ✅ |
 | POST | /api/login | ✅ |
+| POST | /api/send-sms-code | ✅ |
+| POST | /api/reset-password | ✅ |
+| POST | /api/reset-password-by-phone | ✅ |
 | GET | /api/user/me | ✅ |
 | PUT | /api/user/me | ✅ |
 | PUT | /api/user/me/password | ✅ |
-| POST | /api/reset-password | ✅ |
 | DELETE | /api/user/me | ✅ |
 | GET | /api/admin/users | ✅ |
+| PUT | /api/admin/users/{id} | ✅ |
 | DELETE | /api/admin/users/{id} | ✅ |
 
-### 猫咪模块（5/5 ✅）
+### 猫咪模块（6/6 ✅）
 | 方法 | 路径 | 状态 |
 |------|------|------|
 | GET | /api/cats | ✅ |
 | GET | /api/cats/{id} | ✅ |
+| GET | /api/admin/cats | ✅ |
 | POST | /api/admin/cats | ✅ |
 | PUT | /api/admin/cats/{id} | ✅ |
 | DELETE | /api/admin/cats/{id} | ✅ |
 
-### 商品模块（5/5 ✅）
+### 商品模块（7/7 ✅）
 | 方法 | 路径 | 状态 |
 |------|------|------|
 | GET | /api/products | ✅ |
 | GET | /api/products/{id} | ✅ |
+| GET | /api/admin/products | ✅ |
 | POST | /api/admin/products | ✅ |
 | PUT | /api/admin/products/{id} | ✅ |
+| DELETE | /api/admin/products/{id} | ✅ |
 | PUT | /api/admin/products/{id}/off | ✅ |
 
-### 评论模块（4/4 ✅）
+### 评论模块（5/5 ✅）
 | 方法 | 路径 | 状态 |
 |------|------|------|
 | POST | /api/comments | ✅ |
 | GET | /api/comments | ✅ |
+| GET | /api/admin/comments | ✅ |
 | PUT | /api/admin/comments/{id}/audit | ✅ |
 | DELETE | /api/comments/{id} | ✅ |
 
@@ -76,18 +86,19 @@ uvicorn main:app --reload
 | GET | /api/likes | ✅ |
 | DELETE | /api/likes/{id} | ✅ |
 
-### 订单模块（5/5 ✅）
+### 订单模块（6/6 ✅）
 | 方法 | 路径 | 状态 |
 |------|------|------|
 | POST | /api/orders | ✅ |
 | GET | /api/orders | ✅ |
+| GET | /api/admin/orders | ✅ |
 | GET | /api/orders/{id} | ✅ |
 | PUT | /api/orders/{id} | ✅ |
 | DELETE | /api/orders/{id} | ✅ |
 
 ## 接口编写规范
 每个接口：在 schemas.py 定义请求/响应 → 在 routers/ 写路由（db: Session = Depends(get_db)）→ /docs 测试
-详细 API 清单见 docs/开发日志.md
+详细 API 清单见 docs/开发日志2.md 附件；docs/开发日志.md 下方旧清单只保留第一阶段历史记录
 
 ## 命名
 数据库字段 camelCase，接口路径 kebab-case

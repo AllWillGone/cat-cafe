@@ -1,9 +1,10 @@
 """商品模块 — 商品列表/详情/管理员上架下架"""
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 
 from database import get_db
-from models import Product, User
+from models import Product, User, Likes, Order
 from schemas import ProductCreate, ProductUpdate, ProductResponse, PaginatedProducts
 from auth import get_current_admin
 
@@ -12,21 +13,35 @@ router = APIRouter(prefix="/api", tags=["商品模块"])
 
 @router.get("/products", response_model=PaginatedProducts)
 def list_products(
-    category: int | None = None,           # 查询参数 ?category=0/1/2，不传则不过滤
-    skip: int = 0,                         # 分页偏移量
-    limit: int = 20,                       # 每页条数
+    category: int | None = None,
+    keyword: str | None = None,
+    skip: int = 0,
+    limit: int = 20,
     db: Session = Depends(get_db),
 ):
-    """公开接口 — 浏览在售商品，可按分类筛选"""
-    q = db.query(Product).filter(Product.status == 1)  # 只返回 status=1（在售），下架的不出现
+    """公开接口 — 浏览在售商品，可按分类筛选 + 关键字搜索"""
+    q = db.query(Product).filter(Product.status == 1)
     if category is not None:
-        q = q.filter(Product.category == category)     # 0=服务 1=餐饮 2=猫咪用品
-    total = q.count()                                   # 筛选后的总数
+        q = q.filter(Product.category == category)
+    if keyword:
+        q = q.filter(Product.productName.like(f"%{keyword}%"))
+    total = q.count()
     products = q.order_by(Product.productId.desc()).offset(skip).limit(limit).all()
-    return PaginatedProducts(
-        total=total,
-        items=[ProductResponse.model_validate(p) for p in products],
-    )
+
+    pids = [p.productId for p in products]
+    counts = {}
+    if pids:
+        rows = db.query(Likes.objectId, func.count(Likes.likeId)).filter(
+            Likes.likeType == 0, Likes.objectId.in_(pids)
+        ).group_by(Likes.objectId).all()
+        counts = dict(rows)
+
+    items = []
+    for p in products:
+        d = ProductResponse.model_validate(p)
+        d.likeCount = counts.get(p.productId, 0)
+        items.append(d)
+    return PaginatedProducts(total=total, items=items)
 
 
 @router.get("/products/{product_id}", response_model=ProductResponse)
@@ -35,7 +50,38 @@ def get_product(product_id: int, db: Session = Depends(get_db)):
     product = db.query(Product).filter(Product.productId == product_id).first()
     if not product:
         raise HTTPException(status_code=404, detail="商品不存在")
-    return product
+    like_count = db.query(func.count(Likes.likeId)).filter(
+        Likes.likeType == 0, Likes.objectId == product_id
+    ).scalar()
+    resp = ProductResponse.model_validate(product)
+    resp.likeCount = like_count or 0
+    return resp
+
+
+@router.get("/admin/products", response_model=PaginatedProducts)
+def admin_list_products(
+    category: int | None = None,
+    status: int | None = None,
+    keyword: str | None = None,
+    skip: int = 0,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin),
+):
+    """管理员查看所有商品 — 含下架商品，可按分类/状态筛选，关键字搜商品名"""
+    q = db.query(Product)
+    if category is not None:
+        q = q.filter(Product.category == category)
+    if status is not None:
+        q = q.filter(Product.status == status)
+    if keyword:
+        q = q.filter(Product.productName.like(f"%{keyword}%"))
+    total = q.count()
+    products = q.order_by(Product.productId.desc()).offset(skip).limit(limit).all()
+    return PaginatedProducts(
+        total=total,
+        items=[ProductResponse.model_validate(p) for p in products],
+    )
 
 
 @router.post("/admin/products", response_model=ProductResponse)
@@ -68,6 +114,27 @@ def update_product(
     db.commit()
     db.refresh(product)
     return product
+
+
+@router.delete("/admin/products/{product_id}")
+def delete_product(
+    product_id: int,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin),
+):
+    """管理员接口 — 删除无订单商品；有历史订单时改为下架保留数据"""
+    product = db.query(Product).filter(Product.productId == product_id).first()
+    if not product:
+        raise HTTPException(status_code=404, detail="商品不存在")
+    has_orders = db.query(Order).filter(Order.productId == product_id).first()
+    if has_orders:
+        if product.status != 0:
+            product.status = 0
+            db.commit()
+        return {"message": "商品存在历史订单，已改为下架"}
+    db.delete(product)
+    db.commit()
+    return {"message": "商品已删除"}
 
 
 @router.put("/admin/products/{product_id}/off")

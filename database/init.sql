@@ -22,6 +22,8 @@ CREATE TABLE IF NOT EXISTS `user` (
     `userType`     TINYINT UNSIGNED NOT NULL DEFAULT 0       COMMENT '用户类型: 0=顾客, 1=管理员',
     `gender`       TINYINT UNSIGNED DEFAULT NULL             COMMENT '性别: 1=男, 2=女, NULL=未设置',
     `birthday`     DATE             DEFAULT NULL             COMMENT '生日',
+    `userPhone`    VARCHAR(20)      DEFAULT NULL             COMMENT '手机号',
+    `userAvatar`   VARCHAR(255)     DEFAULT NULL             COMMENT '头像URL',
     `registerTime` DATETIME         NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '注册时间',
     PRIMARY KEY (`userId`),
     UNIQUE KEY `uk_userName` (`userName`)

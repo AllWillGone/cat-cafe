@@ -13,7 +13,7 @@ from schemas import (
     OrderCreate, OrderUpdate, AdminOrderUpdate,
     BatchOrderResponse, OrderDetailItem, PaginatedOrders,
 )
-from auth import get_current_user
+from auth import get_current_user, get_current_admin
 
 router = APIRouter(prefix="/api", tags=["订单模块"])
 
@@ -159,6 +159,43 @@ def list_orders(
             unique_orders.append(o)                            # 无批次号的单商品直接保留
 
     batched = _group_by_batch(unique_orders)                   # 按批次聚合
+    return PaginatedOrders(total=total, items=batched)
+
+
+# ── 管理员订单管理 ──
+
+@router.get("/admin/orders", response_model=PaginatedOrders)
+def admin_list_orders(
+    orderStatus: int | None = None,
+    keyword: str | None = None,
+    skip: int = 0,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    admin: User = Depends(get_current_admin),
+):
+    """管理员查看所有订单 — 按状态筛选 + 关键字搜批次号/用户名"""
+    q = db.query(Order)
+    if orderStatus is not None:
+        q = q.filter(Order.orderStatus == orderStatus)
+    if keyword:
+        like = f"%{keyword}%"
+        q = q.filter(
+            Order.batchNo.like(like) | Order.userName.like(like)
+        )
+    q = q.order_by(Order.orderTime.desc())
+    total = q.count()
+    orders = q.offset(skip).limit(limit).all()
+
+    # 按批次去重
+    seen = set()
+    unique = []
+    for o in orders:
+        key = o.batchNo or str(o.orderId)
+        if key not in seen:
+            seen.add(key)
+            unique.append(o)
+
+    batched = _group_by_batch(unique)
     return PaginatedOrders(total=total, items=batched)
 
 
