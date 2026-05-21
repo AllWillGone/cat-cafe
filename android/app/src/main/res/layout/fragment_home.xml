@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/welcomeText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="欢迎来到猫咖"
+                android:textColor="@color/cat_text"
+                android:textSize="22sp"
+                android:textStyle="bold" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/homeAdminButton"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="40dp"
+                android:text="管理员" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/homeLoginButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:text="去我的页面登录" />
+
+        <FrameLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/homeCartButton"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="购物车" />
+
+            <TextView
+                android:id="@+id/homeCartBadge"
+                android:layout_width="wrap_content"
+                android:layout_height="20dp"
+                android:layout_gravity="top|end"
+                android:background="@drawable/bg_cart_badge"
+                android:gravity="center"
+                android:minWidth="20dp"
+                android:paddingStart="4dp"
+                android:paddingEnd="4dp"
+                android:textColor="@android:color/white"
+                android:textSize="11sp"
+                android:textStyle="bold"
+                android:visibility="gone" />
+        </FrameLayout>
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="在岗猫咪"
+            android:textStyle="bold" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/homeCatList"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:layout_marginTop="8dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="20dp"
+            android:text="推荐商品"
+            android:textStyle="bold" />
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/homeProductList"
+            android:layout_width="match_parent"
+            android:layout_height="180dp"
+            android:layout_marginTop="8dp" />
+    </LinearLayout>
+</ScrollView>

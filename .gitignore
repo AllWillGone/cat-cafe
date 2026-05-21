@@ -2,6 +2,7 @@
 # Python 后端
 # ============================================
 __pycache__/
+.pycache/
 *.py[cod]
 *.egg-info/
 dist/
@@ -29,6 +30,8 @@ android/captures/
 *.apk
 *.aab
 *.keystore
+*.jks
+key.properties
 
 # ============================================
 # IDE

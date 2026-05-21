@@ -94,6 +94,35 @@ def list_comments(
     )
 
 
+@router.get("/comments/my", response_model=PaginatedComments)
+def list_my_comments(
+    targetType: int | None = None,
+    skip: int = 0,
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+):
+    """查看当前用户自己的评论，包含待审核、已通过和已拒绝。"""
+    q = db.query(Comment).filter(Comment.userId == current_user.userId)
+    if targetType is not None:
+        q = q.filter(Comment.targetType == targetType)
+    total = q.count()
+    comments = q.order_by(Comment.publishTime.desc()).offset(skip).limit(limit).all()
+
+    comment_ids = [c.commentId for c in comments]
+    like_counts = {}
+    if comment_ids:
+        rows = db.query(Likes.objectId, func.count(Likes.likeId)).filter(
+            Likes.likeType == 1, Likes.objectId.in_(comment_ids)
+        ).group_by(Likes.objectId).all()
+        like_counts = dict(rows)
+
+    return PaginatedComments(
+        total=total,
+        items=[_make_comment_response(c, like_counts.get(c.commentId, 0)) for c in comments],
+    )
+
+
 @router.put("/admin/comments/{comment_id}/audit", response_model=CommentResponse)
 def audit_comment(
     comment_id: int,

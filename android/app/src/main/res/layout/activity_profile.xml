@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_profile_page"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/profileToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:title="个人资料"
+        app:titleCentered="false" />
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                app:cardBackgroundColor="@android:color/transparent"
+                app:cardCornerRadius="22dp"
+                app:cardElevation="0dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:background="@drawable/bg_profile_header"
+                    android:gravity="center_vertical"
+                    android:minHeight="156dp"
+                    android:orientation="horizontal"
+                    android:padding="18dp">
+
+                    <FrameLayout
+                        android:layout_width="88dp"
+                        android:layout_height="88dp">
+
+                        <View
+                            android:layout_width="88dp"
+                            android:layout_height="88dp"
+                            android:background="@drawable/bg_profile_avatar_ring" />
+
+                        <com.google.android.material.imageview.ShapeableImageView
+                            android:id="@+id/profileAvatarImage"
+                            android:layout_width="78dp"
+                            android:layout_height="78dp"
+                            android:layout_gravity="center"
+                            android:scaleType="centerCrop"
+                            android:src="@drawable/ic_image_placeholder"
+                            app:shapeAppearanceOverlay="@style/ShapeAppearance.CatCafe.Circle" />
+                    </FrameLayout>
+
+                    <LinearLayout
+                        android:layout_width="0dp"
+                        android:layout_height="wrap_content"
+                        android:layout_marginStart="16dp"
+                        android:layout_weight="1"
+                        android:orientation="vertical">
+
+                        <TextView
+                            android:id="@+id/profileHeaderName"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:textColor="@android:color/white"
+                            android:textSize="24sp"
+                            android:textStyle="bold" />
+
+                        <TextView
+                            android:id="@+id/profileHeaderType"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="6dp"
+                            android:background="@drawable/bg_profile_chip"
+                            android:paddingStart="10dp"
+                            android:paddingTop="3dp"
+                            android:paddingEnd="10dp"
+                            android:paddingBottom="3dp"
+                            android:textColor="@android:color/white"
+                            android:textSize="12sp" />
+
+                        <TextView
+                            android:id="@+id/profileHeaderMeta"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:layout_marginTop="12dp"
+                            android:textColor="#EFFFFFFF"
+                            android:textSize="13sp" />
+                    </LinearLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.card.MaterialCardView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                app:cardBackgroundColor="@color/white"
+                app:cardCornerRadius="18dp"
+                app:cardElevation="1dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:orientation="vertical"
+                    android:padding="16dp">
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:text="基础信息"
+                        android:textColor="@color/cat_text"
+                        android:textSize="17sp"
+                        android:textStyle="bold" />
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:hint="用户名">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/profileNameInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:singleLine="true" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:hint="手机号">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/profilePhoneInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:inputType="phone"
+                            android:singleLine="true" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <TextView
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="14dp"
+                        android:text="性别"
+                        android:textColor="@color/cat_muted"
+                        android:textSize="13sp" />
+
+                    <RadioGroup
+                        android:id="@+id/profileGenderGroup"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="6dp"
+                        android:orientation="horizontal">
+
+                        <RadioButton
+                            android:id="@+id/profileGenderMale"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="男" />
+
+                        <RadioButton
+                            android:id="@+id/profileGenderFemale"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="20dp"
+                            android:text="女" />
+                    </RadioGroup>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:hint="生日">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/profileBirthdayInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:clickable="true"
+                            android:focusable="false"
+                            android:inputType="date"
+                            android:singleLine="true" />
+                    </com.google.android.material.textfield.TextInputLayout>
+
+                    <com.google.android.material.textfield.TextInputLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="10dp"
+                        android:hint="头像路径">
+
+                        <com.google.android.material.textfield.TextInputEditText
+                            android:id="@+id/profileAvatarInput"
+                            android:layout_width="match_parent"
+                            android:layout_height="wrap_content"
+                            android:singleLine="true" />
+                    </com.google.android.material.textfield.TextInputLayout>
+                </LinearLayout>
+            </com.google.android.material.card.MaterialCardView>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/profileSubmitButton"
+                android:layout_width="match_parent"
+                android:layout_height="52dp"
+                android:layout_marginTop="18dp"
+                android:text="保存修改"
+                android:textSize="16sp" />
+        </LinearLayout>
+    </ScrollView>
+</LinearLayout>

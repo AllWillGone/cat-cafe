@@ -12,9 +12,11 @@ router = APIRouter(prefix="/api", tags=["猫咪模块"])
 
 
 @router.get("/cats", response_model=PaginatedCats)
-def list_cats(keyword: str | None = None, skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
+def list_cats(keyword: str | None = None, includeAll: bool = False, skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
     """公开接口 — 查看猫咪列表，只返回在岗(status=1)的猫咪，支持关键字搜索"""
-    q = db.query(Catinformation).filter(Catinformation.status == 1)
+    q = db.query(Catinformation)
+    if not includeAll:
+        q = q.filter(Catinformation.status == 1)
     if keyword:
         like = f"%{keyword}%"
         q = q.filter(

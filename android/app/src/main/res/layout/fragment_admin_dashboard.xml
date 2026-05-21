@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@drawable/bg_profile_page">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="16dp">
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="管理员工作台"
+            android:textColor="@color/cat_text"
+            android:textSize="22sp"
+            android:textStyle="bold" />
+
+        <GridLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="12dp"
+            android:columnCount="2">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/adminCommentsButton"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="72dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="6dp"
+                android:text="评论管理" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/adminOrdersButton"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="72dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="6dp"
+                android:text="订单管理" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/adminProductsButton"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="72dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="6dp"
+                android:text="商品管理" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/adminCatsButton"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="72dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="6dp"
+                android:text="猫咪管理" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/adminUsersButton"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="72dp"
+                android:layout_columnWeight="1"
+                android:layout_margin="6dp"
+                android:text="用户管理" />
+        </GridLayout>
+    </LinearLayout>
+</ScrollView>

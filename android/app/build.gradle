@@ -1,0 +1,96 @@
+plugins {
+    alias(libs.plugins.android.application)
+}
+
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { stream ->
+        localProperties.load(stream)
+    }
+}
+def sdkDir = localProperties.getProperty("sdk.dir") ?: System.getenv("ANDROID_HOME") ?: System.getenv("ANDROID_SDK_ROOT")
+def adbExecutablePath = "adb"
+if (sdkDir) {
+    def adbExeName = System.getProperty("os.name").toLowerCase(Locale.ROOT).contains("windows") ? "adb.exe" : "adb"
+    def adbFile = new File(sdkDir, "platform-tools/${adbExeName}")
+    if (adbFile.exists()) {
+        adbExecutablePath = adbFile.absolutePath
+    }
+}
+
+android {
+    namespace 'com.catcafe.app'
+    compileSdk {
+        version = release(36) {
+            minorApiLevel = 1
+        }
+    }
+
+    buildFeatures {
+        buildConfig = true
+    }
+
+    defaultConfig {
+        applicationId "com.catcafe.app"
+        minSdk 24
+        targetSdk 36
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // Debug emulator traffic is forwarded by adb reverse tasks below.
+        buildConfigField "String", "API_BASE_URL", "\"http://127.0.0.1:8000/\""
+        buildConfigField "String", "IMAGE_BASE_URL", "\"http://127.0.0.1:8000\""
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled false
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_11
+        targetCompatibility JavaVersion.VERSION_11
+    }
+}
+
+dependencies {
+    implementation libs.activity.ktx
+    implementation libs.appcompat
+    implementation libs.constraintlayout
+    implementation libs.coordinatorlayout
+    implementation libs.material
+    implementation 'androidx.recyclerview:recyclerview:1.3.2'
+    implementation 'androidx.swiperefreshlayout:swiperefreshlayout:1.1.0'
+    implementation 'androidx.cardview:cardview:1.0.0'
+    implementation 'com.squareup.retrofit2:retrofit:2.11.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.11.0'
+    implementation 'com.squareup.okhttp3:logging-interceptor:4.12.0'
+    implementation 'com.github.bumptech.glide:glide:4.16.0'
+    testImplementation libs.junit
+    androidTestImplementation libs.espresso.core
+    androidTestImplementation libs.ext.junit
+}
+
+tasks.register("adbReverseBackendPort", Exec) {
+    group = "android"
+    description = "Forward emulator localhost port 8000 to the host backend."
+    executable adbExecutablePath
+    args "reverse", "tcp:8000", "tcp:8000"
+    doFirst {
+        println "Forwarding emulator http://127.0.0.1:8000 to host backend"
+    }
+}
+
+tasks.register("adbReverseDebugPorts") {
+    group = "android"
+    description = "Forward emulator localhost port to the host backend."
+    dependsOn "adbReverseBackendPort"
+}
+
+tasks.matching { it.name == "installDebug" }.configureEach {
+    dependsOn "adbReverseDebugPorts"
+}

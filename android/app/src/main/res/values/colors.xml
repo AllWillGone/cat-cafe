@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="black">#FF000000</color>
+    <color name="white">#FFFFFFFF</color>
+    <color name="cat_primary">#2F5D50</color>
+    <color name="cat_primary_dark">#1D3D35</color>
+    <color name="cat_accent">#D86F45</color>
+    <color name="cat_surface">#F7F5F0</color>
+    <color name="cat_text">#222222</color>
+    <color name="cat_muted">#6A6F73</color>
+    <color name="cat_border">#D8D8D8</color>
+    <color name="like_red">#E53935</color>
+</resources>

@@ -1,0 +1,16 @@
+<resources xmlns:tools="http://schemas.android.com/tools">
+    <!-- Base application theme. -->
+    <style name="Base.Theme.CatCafe" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/cat_primary</item>
+        <item name="colorPrimaryVariant">@color/cat_primary_dark</item>
+        <item name="colorSecondary">@color/cat_accent</item>
+        <item name="android:fontFamily">sans</item>
+        <item name="android:windowLightStatusBar">false</item>
+    </style>
+
+    <style name="Theme.CatCafe" parent="Base.Theme.CatCafe" />
+
+    <style name="ShapeAppearance.CatCafe.Circle" parent="">
+        <item name="cornerSize">50%</item>
+    </style>
+</resources>

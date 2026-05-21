@@ -1,0 +1,111 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical">
+
+    <com.google.android.material.appbar.MaterialToolbar
+        android:id="@+id/adminToolbar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        app:titleCentered="false" />
+
+    <LinearLayout
+        android:id="@+id/adminFilterPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:orientation="vertical"
+        android:padding="12dp">
+
+        <Spinner
+            android:id="@+id/adminFilterSpinner"
+            android:layout_width="match_parent"
+            android:layout_height="48dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/adminKeywordLayout"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/adminKeywordInput"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:imeOptions="actionSearch"
+                    android:singleLine="true" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/adminSearchButton"
+                android:layout_width="wrap_content"
+                android:layout_height="52dp"
+                android:layout_marginStart="8dp"
+                android:text="搜索" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/adminAddButton"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:layout_marginTop="8dp"
+            android:visibility="gone" />
+    </LinearLayout>
+
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/adminRefresh"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1"
+        android:background="@drawable/bg_profile_page">
+
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/adminRecycler"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:clipToPadding="false"
+            android:paddingVertical="8dp" />
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
+
+    <LinearLayout
+        android:id="@+id/adminPagingBar"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="@color/white"
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="8dp">
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/adminPrevButton"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="上一页" />
+
+        <TextView
+            android:id="@+id/adminPageText"
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:gravity="center"
+            android:textColor="@color/cat_text" />
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/adminNextButton"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="40dp"
+            android:text="下一页" />
+    </LinearLayout>
+</LinearLayout>
