@@ -32,6 +32,11 @@ import com.catcafe.app.ui.adapter.ProductAdapter;
 import com.google.android.material.button.MaterialButton;
 import com.google.android.material.button.MaterialButtonToggleGroup;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+
 public class ServiceFragment extends Fragment {
     private static final int TAB_PRODUCTS = R.id.tabProducts;
     private static final int TAB_CATS = R.id.tabCats;
@@ -73,7 +78,8 @@ public class ServiceFragment extends Fragment {
         productAdapter = createProductAdapter();
         ticketAdapter = createProductAdapter();
         catAdapter = new CatAdapter(requireContext(), this::openCatDetail,
-                (cat, countView, button) -> new LikeController(requireActivity(), 2, cat.catId, cat.likeCount, countView, button).bind());
+                (cat, countView, button) -> new LikeController(requireActivity(), 2, cat.catId, cat.likeCount, countView, button).bind(),
+                true);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
         ticketList.setLayoutManager(new LinearLayoutManager(requireContext()));
@@ -272,7 +278,7 @@ public class ServiceFragment extends Fragment {
                             return;
                         }
                         refreshLayout.setRefreshing(false);
-                        catAdapter.submitList(data.items);
+                        catAdapter.submitList(sortCatsByLikes(data.items));
                     }
 
                     @Override
@@ -294,5 +300,20 @@ public class ServiceFragment extends Fragment {
         view.findViewById(R.id.adminCatsButton).setOnClickListener(v -> startActivity(AdminCatsActivity.intent(requireContext())));
         view.findViewById(R.id.adminUsersButton).setOnClickListener(v -> startActivity(AdminUsersActivity.intent(requireContext())));
         return view;
+    }
+
+    private List<CatDetail> sortCatsByLikes(List<CatDetail> cats) {
+        List<CatDetail> sorted = cats == null ? new ArrayList<>() : new ArrayList<>(cats);
+        Collections.sort(sorted, new Comparator<CatDetail>() {
+            @Override
+            public int compare(CatDetail left, CatDetail right) {
+                int byLikes = Integer.compare(right.likeCount, left.likeCount);
+                if (byLikes != 0) {
+                    return byLikes;
+                }
+                return Long.compare(right.catId, left.catId);
+            }
+        });
+        return sorted;
     }
 }

@@ -9,7 +9,10 @@ import android.widget.Toast;
 import com.catcafe.app.core.SessionManager;
 import com.catcafe.app.ui.AdminAuthActivity;
 import com.catcafe.app.ui.AuthActivity;
-import com.google.gson.Gson;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import java.io.IOException;
 
@@ -76,14 +79,60 @@ public final class NetworkHelper {
             return fallback;
         }
         try {
-            ApiError error = new Gson().fromJson(response.errorBody().string(), ApiError.class);
-            if (error != null && error.detail != null && !error.detail.trim().isEmpty()) {
-                return error.detail;
+            String message = parseErrorMessage(response.errorBody().string());
+            if (message != null && !message.trim().isEmpty()) {
+                return message;
             }
-        } catch (IOException ignored) {
+        } catch (IOException | RuntimeException ignored) {
             // 解析失败时使用状态码对应的友好提示。
         }
         return fallback;
+    }
+
+    private static String parseErrorMessage(String body) {
+        JsonElement root = JsonParser.parseString(body);
+        if (!root.isJsonObject()) {
+            return null;
+        }
+        JsonElement detail = root.getAsJsonObject().get("detail");
+        if (detail == null || detail.isJsonNull()) {
+            return null;
+        }
+        if (detail.isJsonPrimitive()) {
+            return detail.getAsString();
+        }
+        if (!detail.isJsonArray()) {
+            return null;
+        }
+        JsonArray errors = detail.getAsJsonArray();
+        if (errors.isEmpty()) {
+            return null;
+        }
+        JsonElement first = errors.get(0);
+        if (first.isJsonObject()) {
+            JsonObject item = first.getAsJsonObject();
+            JsonElement msg = item.get("msg");
+            if (msg != null && msg.isJsonPrimitive()) {
+                return friendlyValidationMessage(msg.getAsString());
+            }
+        }
+        return "请检查填写内容";
+    }
+
+    private static String friendlyValidationMessage(String raw) {
+        if (raw == null) {
+            return "请检查填写内容";
+        }
+        if (raw.contains("at least 6")) {
+            return "密码至少 6 位";
+        }
+        if (raw.contains("at least 1")) {
+            return "请填写必填内容";
+        }
+        if (raw.contains("at most")) {
+            return "填写内容过长";
+        }
+        return "请检查填写内容";
     }
 
     private static String mapStatus(int code) {

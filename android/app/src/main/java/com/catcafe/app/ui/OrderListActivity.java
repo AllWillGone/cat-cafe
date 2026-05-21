@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.catcafe.app.R;
 import com.catcafe.app.model.BatchOrderResponse;
@@ -33,6 +34,7 @@ import java.util.Map;
 public class OrderListActivity extends BaseToolbarActivity implements OrderAdapter.Listener {
     private final String[] statusLabels = {"全部状态", "未支付", "已支付", "待取货", "已完成", "已取消"};
     private RecyclerView list;
+    private SwipeRefreshLayout refreshLayout;
     private Spinner statusFilter;
     private TextInputEditText keywordInput;
 
@@ -47,11 +49,13 @@ public class OrderListActivity extends BaseToolbarActivity implements OrderAdapt
         setupToolbar(R.id.orderToolbar);
 
         list = findViewById(R.id.orderList);
+        refreshLayout = findViewById(R.id.orderRefresh);
         statusFilter = findViewById(R.id.orderStatusFilter);
         keywordInput = findViewById(R.id.orderKeywordInput);
         MaterialButton searchButton = findViewById(R.id.orderSearchButton);
 
         list.setLayoutManager(new LinearLayoutManager(this));
+        refreshLayout.setOnRefreshListener(this::loadOrders);
         statusFilter.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, statusLabels));
         searchButton.setOnClickListener(v -> loadOrders());
         loadOrders();
@@ -122,11 +126,13 @@ public class OrderListActivity extends BaseToolbarActivity implements OrderAdapt
         NetworkHelper.enqueue(this, ApiClient.getService(this).getOrders(status, keyword, 0, 50), new ApiCallback<PaginatedOrders>() {
             @Override
             public void onSuccess(PaginatedOrders data) {
+                refreshLayout.setRefreshing(false);
                 list.setAdapter(new OrderAdapter(data.items, OrderListActivity.this));
             }
 
             @Override
             public void onError(String message) {
+                refreshLayout.setRefreshing(false);
                 Toast.makeText(OrderListActivity.this, message, Toast.LENGTH_SHORT).show();
             }
         });

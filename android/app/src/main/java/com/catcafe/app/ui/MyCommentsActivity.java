@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.catcafe.app.R;
 import com.catcafe.app.model.CommentDetail;
@@ -27,6 +28,7 @@ import java.util.List;
 public class MyCommentsActivity extends BaseToolbarActivity {
     private final String[] typeLabels = {"全部评论", "商品", "猫咪"};
     private RecyclerView list;
+    private SwipeRefreshLayout refreshLayout;
     private TextView empty;
     private Spinner typeFilter;
     private TextInputEditText keywordInput;
@@ -41,12 +43,14 @@ public class MyCommentsActivity extends BaseToolbarActivity {
         setContentView(R.layout.activity_comment_list);
         setupToolbar(R.id.commentListToolbar);
         list = findViewById(R.id.commentList);
+        refreshLayout = findViewById(R.id.commentRefresh);
         empty = findViewById(R.id.commentListEmpty);
         typeFilter = findViewById(R.id.commentTypeFilter);
         keywordInput = findViewById(R.id.commentKeywordInput);
         MaterialButton searchButton = findViewById(R.id.commentSearchButton);
 
         list.setLayoutManager(new LinearLayoutManager(this));
+        refreshLayout.setOnRefreshListener(this::loadComments);
         typeFilter.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, typeLabels));
         searchButton.setOnClickListener(v -> loadComments());
         loadComments();
@@ -56,6 +60,7 @@ public class MyCommentsActivity extends BaseToolbarActivity {
         NetworkHelper.enqueue(this, ApiClient.getService(this).getMyComments(selectedTargetType(), 0, 100), new ApiCallback<PaginatedComments>() {
             @Override
             public void onSuccess(PaginatedComments data) {
+                refreshLayout.setRefreshing(false);
                 List<CommentDetail> items = filterByKeyword(data.items);
                 boolean isEmpty = items.isEmpty();
                 empty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
@@ -64,6 +69,7 @@ public class MyCommentsActivity extends BaseToolbarActivity {
 
             @Override
             public void onError(String message) {
+                refreshLayout.setRefreshing(false);
                 empty.setVisibility(View.VISIBLE);
                 empty.setText(message);
             }

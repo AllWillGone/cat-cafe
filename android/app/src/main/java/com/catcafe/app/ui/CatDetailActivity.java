@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.bumptech.glide.Glide;
 import com.catcafe.app.R;
@@ -29,8 +30,19 @@ public class CatDetailActivity extends BaseToolbarActivity {
 
     private SessionManager sessionManager;
     private long catId;
+    private SwipeRefreshLayout refreshLayout;
+    private ImageView image;
+    private TextView name;
+    private TextView meta;
+    private TextView personality;
+    private TextView notes;
+    private TextView likes;
+    private MaterialButton commentButton;
+    private ImageButton likeButton;
     private RecyclerView commentList;
     private TextView commentEmpty;
+    private int refreshRequestsPending;
+    private boolean hasResumedOnce;
 
     public static Intent intent(Context context, long id) {
         return new Intent(context, CatDetailActivity.class).putExtra(EXTRA_ID, id);
@@ -44,21 +56,44 @@ public class CatDetailActivity extends BaseToolbarActivity {
         sessionManager = new SessionManager(this);
 
         catId = getIntent().getLongExtra(EXTRA_ID, 0L);
-        ImageView image = findViewById(R.id.catDetailImage);
-        TextView name = findViewById(R.id.catDetailName);
-        TextView meta = findViewById(R.id.catDetailMeta);
-        TextView personality = findViewById(R.id.catDetailPersonality);
-        TextView notes = findViewById(R.id.catDetailNotes);
-        TextView likes = findViewById(R.id.catDetailLikes);
-        MaterialButton commentButton = findViewById(R.id.catDetailCommentButton);
-        ImageButton likeButton = findViewById(R.id.catDetailLikeButton);
+        refreshLayout = findViewById(R.id.catDetailRefresh);
+        image = findViewById(R.id.catDetailImage);
+        name = findViewById(R.id.catDetailName);
+        meta = findViewById(R.id.catDetailMeta);
+        personality = findViewById(R.id.catDetailPersonality);
+        notes = findViewById(R.id.catDetailNotes);
+        likes = findViewById(R.id.catDetailLikes);
+        commentButton = findViewById(R.id.catDetailCommentButton);
+        likeButton = findViewById(R.id.catDetailLikeButton);
         commentList = findViewById(R.id.catDetailCommentList);
         commentEmpty = findViewById(R.id.catDetailCommentEmpty);
         commentList.setLayoutManager(new LinearLayoutManager(this));
+        refreshLayout.setOnRefreshListener(this::refreshDetailPage);
 
+        refreshDetailPage();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (hasResumedOnce && catId > 0 && commentList != null) {
+            loadComments(false);
+        }
+        hasResumedOnce = true;
+    }
+
+    private void refreshDetailPage() {
+        refreshLayout.setRefreshing(true);
+        refreshRequestsPending = 2;
+        loadCat(true);
+        loadComments(true);
+    }
+
+    private void loadCat(boolean trackRefresh) {
         NetworkHelper.enqueue(this, ApiClient.getService(this).getCat(catId), new ApiCallback<CatDetail>() {
             @Override
             public void onSuccess(CatDetail data) {
+                finishRefreshRequest(trackRefresh);
                 name.setText(data.catName);
                 meta.setText(UiText.safeJoin(data.breed, UiText.catStatus(data.status), " · "));
                 personality.setText(data.personality);
@@ -86,28 +121,21 @@ public class CatDetailActivity extends BaseToolbarActivity {
                 } else {
                     new LikeController(CatDetailActivity.this, 2, data.catId, data.likeCount, likes, likeButton).bind();
                 }
-                loadComments();
             }
 
             @Override
             public void onError(String message) {
+                finishRefreshRequest(trackRefresh);
                 Toast.makeText(CatDetailActivity.this, message, Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (catId > 0 && commentList != null) {
-            loadComments();
-        }
-    }
-
-    private void loadComments() {
+    private void loadComments(boolean trackRefresh) {
         NetworkHelper.enqueue(this, ApiClient.getService(this).getComments(1, catId, 0, 20), new ApiCallback<PaginatedComments>() {
             @Override
             public void onSuccess(PaginatedComments data) {
+                finishRefreshRequest(trackRefresh);
                 boolean empty = data.items == null || data.items.isEmpty();
                 commentEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
                 commentList.setAdapter(new CommentAdapter(CatDetailActivity.this, data.items));
@@ -115,9 +143,20 @@ public class CatDetailActivity extends BaseToolbarActivity {
 
             @Override
             public void onError(String message) {
+                finishRefreshRequest(trackRefresh);
                 commentEmpty.setVisibility(View.VISIBLE);
                 commentEmpty.setText(message);
             }
         });
+    }
+
+    private void finishRefreshRequest(boolean trackRefresh) {
+        if (!trackRefresh || refreshLayout == null) {
+            return;
+        }
+        refreshRequestsPending = Math.max(0, refreshRequestsPending - 1);
+        if (refreshRequestsPending == 0) {
+            refreshLayout.setRefreshing(false);
+        }
     }
 }

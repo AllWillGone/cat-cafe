@@ -227,6 +227,14 @@ public class AuthActivity extends BaseToolbarActivity {
                 toast("请填写用户名和手机号");
                 return;
             }
+            if (phone.length() < 11) {
+                toast("请输入正确手机号");
+                return;
+            }
+            if (password.length() < 6) {
+                toast("密码至少 6 位");
+                return;
+            }
             if (!password.equals(confirm)) {
                 toast("两次密码不一致");
                 return;
