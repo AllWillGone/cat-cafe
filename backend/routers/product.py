@@ -7,6 +7,7 @@ from database import get_db
 from models import Product, User, Likes, Order
 from schemas import ProductCreate, ProductUpdate, ProductResponse, PaginatedProducts
 from auth import get_current_admin
+from cleanup import delete_comments_for_target, delete_likes_for_object
 
 router = APIRouter(prefix="/api", tags=["商品模块"])
 
@@ -128,10 +129,14 @@ def delete_product(
         raise HTTPException(status_code=404, detail="商品不存在")
     has_orders = db.query(Order).filter(Order.productId == product_id).first()
     if has_orders:
+        delete_likes_for_object(db, 0, product_id)
+        delete_comments_for_target(db, 0, product_id)
         if product.status != 0:
             product.status = 0
-            db.commit()
+        db.commit()
         return {"message": "商品存在历史订单，已改为下架"}
+    delete_likes_for_object(db, 0, product_id)
+    delete_comments_for_target(db, 0, product_id)
     db.delete(product)
     db.commit()
     return {"message": "商品已删除"}

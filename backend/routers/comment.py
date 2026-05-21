@@ -8,6 +8,7 @@ from database import get_db
 from models import Comment, User, Product, Catinformation, Likes
 from schemas import CommentCreate, CommentAudit, CommentResponse, PaginatedComments
 from auth import get_current_user, get_current_admin
+from cleanup import delete_likes_for_object
 
 router = APIRouter(prefix="/api", tags=["评论模块"])
 
@@ -197,6 +198,7 @@ def delete_comment(
     # 双重权限：作者本人（userId 匹配）或 管理员（userType=1）
     if comment.userId != current_user.userId and current_user.userType != 1:
         raise HTTPException(status_code=403, detail="无权删除此评论")
+    delete_likes_for_object(db, 1, comment_id)
     db.delete(comment)
     db.commit()
     return {"message": "评论已删除"}
