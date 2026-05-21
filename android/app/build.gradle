@@ -40,12 +40,17 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        // Debug emulator traffic is forwarded by adb reverse tasks below.
-        buildConfigField "String", "API_BASE_URL", "\"http://127.0.0.1:8000/\""
-        buildConfigField "String", "IMAGE_BASE_URL", "\"http://127.0.0.1:8000\""
+        // 默认：生产服务器（真机 / release 使用）
+        buildConfigField "String", "API_BASE_URL", "\"http://47.86.228.41/\""
+        buildConfigField "String", "IMAGE_BASE_URL", "\"http://47.86.228.41\""
     }
 
     buildTypes {
+        debug {
+            // 模拟器通过 adb reverse 访问本机后端
+            buildConfigField "String", "API_BASE_URL", "\"http://127.0.0.1:8000/\""
+            buildConfigField "String", "IMAGE_BASE_URL", "\"http://127.0.0.1:8000\""
+        }
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'

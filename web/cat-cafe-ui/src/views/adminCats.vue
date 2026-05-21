@@ -94,8 +94,19 @@
         <el-form-item label="性格">
           <el-input v-model="form.personality" type="textarea" maxlength="500" />
         </el-form-item>
-        <el-form-item label="照片URL">
-          <el-input v-model="form.photoUrl" maxlength="255" />
+        <el-form-item label="照片">
+          <div style="display: flex; gap: 8px; align-items: center; width: 100%">
+            <el-input v-model="form.photoUrl" placeholder="上传或手动输入路径" maxlength="255" style="flex:1" />
+            <el-upload
+              :show-file-list="false"
+              :before-upload="beforeUpload"
+              :http-request="doUpload"
+              accept="image/*"
+            >
+              <el-button :loading="uploadingPhoto">选择文件</el-button>
+            </el-upload>
+          </div>
+          <img v-if="form.photoUrl" :src="form.photoUrl" class="upload-preview" />
         </el-form-item>
         <el-form-item label="备注">
           <el-input v-model="form.notes" type="textarea" maxlength="500" />
@@ -113,6 +124,40 @@
 import { ref, reactive, onMounted } from 'vue'
 import api from '../api/index'
 import { ElMessage, ElMessageBox } from 'element-plus'
+
+const uploadingPhoto = ref(false)
+
+const beforeUpload = (file) => {
+  const isImage = file.type.startsWith('image/')
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件')
+    return false
+  }
+  const isLt5M = file.size / 1024 / 1024 < 5
+  if (!isLt5M) {
+    ElMessage.error('图片大小不能超过 5MB')
+    return false
+  }
+  return true
+}
+
+const doUpload = async (options) => {
+  uploadingPhoto.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file', options.file)
+    fd.append('type', 'cat')
+    const res = await api.post('/api/admin/upload', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    form.photoUrl = res.data.url
+    ElMessage.success('上传成功')
+  } catch (err) {
+    ElMessage.error(err.response?.data?.detail || '上传失败')
+  } finally {
+    uploadingPhoto.value = false
+  }
+}
 
 const cats = ref([])
 const loading = ref(false)
@@ -257,5 +302,13 @@ onMounted(() => {
   margin-top: 16px;
   display: flex;
   justify-content: flex-end;
+}
+
+.upload-preview {
+  max-width: 200px;
+  max-height: 120px;
+  margin-top: 8px;
+  border-radius: 4px;
+  display: block;
 }
 </style>

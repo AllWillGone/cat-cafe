@@ -28,6 +28,9 @@ services:
       DB_USER: root
       DB_PASSWORD: yang
       DB_NAME: cat_cafe
+      UPLOAD_DIR: /app/uploads
+    volumes:
+      - ./uploads:/app/uploads
     restart: unless-stopped
 
   nginx:
@@ -38,6 +41,10 @@ services:
       - "80:80"
     depends_on:
       - backend
+    volumes:
+      - ./uploads/cats:/usr/share/nginx/html/cats
+      - ./uploads/products:/usr/share/nginx/html/products
+      - ./uploads/avatars:/usr/share/nginx/html/avatars
     restart: unless-stopped
 
 volumes:
