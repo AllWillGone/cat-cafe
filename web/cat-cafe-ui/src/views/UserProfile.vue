@@ -24,8 +24,8 @@
         <el-form-item label="用户名">
           <el-input v-model="form.userName" maxlength="50" />
         </el-form-item>
-        <el-form-item label="手机号">
-          <el-input v-model="form.userPhone" maxlength="20" />
+        <el-form-item label="手机号" prop="userPhone" :error="phoneError">
+          <el-input v-model="form.userPhone" maxlength="11" placeholder="请输入11位手机号" @input="phoneError=''" />
         </el-form-item>
         <el-form-item label="性别">
           <el-radio-group v-model="form.gender">
@@ -35,13 +35,18 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="生日">
-          <el-date-picker v-model="form.birthday" type="date" value-format="YYYY-MM-DD" />
+          <el-date-picker v-model="form.birthday" type="date" value-format="YYYY-MM-DD" :disabled-date="disableFutureDate" />
         </el-form-item>
         <el-form-item label="注册时间">
           <el-input :model-value="profile.registerTime" disabled />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="saving" @click="saveProfile">保存修改</el-button>
+        </el-form-item>
+        <el-divider />
+        <el-form-item>
+          <el-button type="danger" :loading="deleting" @click="deleteAccount">注销账号</el-button>
+          <span style="color:#999;font-size:12px;margin-left:12px">注销后数据无法恢复</span>
         </el-form-item>
       </el-form>
     </el-card>
@@ -71,8 +76,10 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import api from '../api/index'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import { useRouter } from 'vue-router'
 
+const router = useRouter()
 const profile = ref({})
 const loading = ref(false)
 const saving = ref(false)
@@ -101,7 +108,14 @@ const fetchProfile = async () => {
   }
 }
 
+const phoneError = ref('')
+const phonePattern = /^1[3-9]\d{9}$/
+
 const saveProfile = async () => {
+  if (form.userPhone && !phonePattern.test(form.userPhone)) {
+    phoneError.value = '请输入正确的11位手机号'
+    return
+  }
   saving.value = true
   try {
     const body = {
@@ -120,6 +134,32 @@ const saveProfile = async () => {
     ElMessage.error(err.response?.data?.detail || '更新失败')
   } finally {
     saving.value = false
+  }
+}
+
+const disableFutureDate = (time) => time.getTime() > Date.now()
+
+const deleting = ref(false)
+const deleteAccount = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '注销后账号将被永久删除，数据无法恢复。确定要继续吗？',
+      '确认注销',
+      { confirmButtonText: '确认注销', cancelButtonText: '返回', confirmButtonClass: 'el-button--danger', type: 'warning' }
+    )
+  } catch {
+    return
+  }
+  deleting.value = true
+  try {
+    await api.delete('/api/user/me')
+    ElMessage.success('账号已注销')
+    localStorage.clear()
+    router.push('/login')
+  } catch (err) {
+    ElMessage.error(err.response?.data?.detail || '注销失败，可能存在未完成的订单')
+  } finally {
+    deleting.value = false
   }
 }
 

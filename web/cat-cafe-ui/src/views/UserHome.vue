@@ -91,12 +91,31 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
-.user-layout { min-height: 100vh; background: #f5f5f5; }
+.user-layout {
+  min-height: 100vh;
+  background: #f5f5f5;
+  --el-color-primary: #E8983E;
+  --el-color-primary-light-3: #f0bc7e;
+  --el-color-primary-light-5: #f5d2a9;
+  --el-color-primary-light-7: #fae8d4;
+  --el-color-primary-light-9: #fef7f0;
+  --el-color-primary-dark-2: #c97c2e;
+}
 .user-header { display: flex; align-items: center; background: #fff; border-bottom: 1px solid #e6e6e6; padding: 0 20px; height: 60px; }
-.logo { font-size: 18px; font-weight: bold; color: #409EFF; margin-right: 30px; white-space: nowrap; }
+.logo { font-size: 18px; font-weight: bold; color: #E8983E; margin-right: 30px; white-space: nowrap; }
 .nav-menu { flex: 1; border-bottom: none !important; }
 .nav-menu .el-menu-item { height: 60px; line-height: 60px; }
 .header-right { display: flex; align-items: center; gap: 8px; margin-left: 20px; }
 .profile-trigger { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .user-name { font-size: 14px; color: #333; }
+</style>
+<style>
+.user-layout {
+  --el-color-primary: #E8983E;
+  --el-color-primary-light-3: #f0bc7e;
+  --el-color-primary-light-5: #f5d2a9;
+  --el-color-primary-light-7: #fae8d4;
+  --el-color-primary-light-9: #fef7f0;
+  --el-color-primary-dark-2: #c97c2e;
+}
 </style>

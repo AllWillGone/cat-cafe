@@ -16,18 +16,27 @@ router = APIRouter(prefix="/api", tags=["商品模块"])
 def list_products(
     category: int | None = None,
     keyword: str | None = None,
+    sortBy: str = "default",
     skip: int = 0,
     limit: int = 20,
     db: Session = Depends(get_db),
 ):
-    """公开接口 — 浏览在售商品，可按分类筛选 + 关键字搜索"""
-    q = db.query(Product).filter(Product.status == 1)
+    """公开接口 — 浏览在售商品，可按分类筛选 + 关键字搜索 + 按点赞排序"""
+    like_sub = db.query(Likes.objectId, func.count(Likes.likeId).label('cnt')).filter(
+        Likes.likeType == 0
+    ).group_by(Likes.objectId).subquery()
+
+    q = db.query(Product).outerjoin(like_sub, Product.productId == like_sub.c.objectId).filter(Product.status == 1)
     if category is not None:
         q = q.filter(Product.category == category)
     if keyword:
         q = q.filter(Product.productName.like(f"%{keyword}%"))
     total = q.count()
-    products = q.order_by(Product.productId.desc()).offset(skip).limit(limit).all()
+    if sortBy == "likeCount":
+        q = q.order_by(func.coalesce(like_sub.c.cnt, 0).desc(), Product.productId.desc())
+    else:
+        q = q.order_by(Product.productId.desc())
+    products = q.offset(skip).limit(limit).all()
 
     pids = [p.productId for p in products]
     counts = {}

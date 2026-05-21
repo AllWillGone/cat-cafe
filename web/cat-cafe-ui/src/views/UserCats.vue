@@ -2,11 +2,15 @@
   <div class="page">
     <h3>猫咪列表</h3>
     <div class="toolbar">
+      <el-select v-model="sortBy" style="width: 140px" @change="fetchCats">
+        <el-option label="默认排序" value="default" />
+        <el-option label="点赞最多" value="likeCount" />
+      </el-select>
       <el-input
         v-model="keyword"
         placeholder="搜索猫名 / 品种 / 性格"
         clearable
-        style="width: 280px"
+        style="width: 240px; margin-left: 12px"
         @keyup.enter="fetchCats"
         @clear="fetchCats"
       />
@@ -119,11 +123,12 @@ import { ElMessage } from 'element-plus'
 const cats = ref([])
 const loading = ref(false)
 const keyword = ref('')
+const sortBy = ref('default')
 
 const fetchCats = async () => {
   loading.value = true
   try {
-    const params = {}
+    const params = { sortBy: sortBy.value }
     if (keyword.value) params.keyword = keyword.value
     const [catRes, myLikesRes] = await Promise.all([
       api.get('/api/cats', { params }),

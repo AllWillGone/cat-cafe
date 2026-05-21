@@ -61,7 +61,7 @@ const loading = ref(false)
 const fetchCats = async () => {
   loading.value = true
   try {
-    const res = await api.get('/api/cats')
+    const res = await api.get('/api/cats', { params: { sortBy: 'likeCount' } })
     cats.value = res.data.items
   } catch {
     // silent

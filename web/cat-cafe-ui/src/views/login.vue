@@ -52,11 +52,6 @@
             没有账号？去注册
           </el-button>
         </el-form-item>
-
-        <el-divider content-position="center">快速体验</el-divider>
-        <el-button type="success" plain class="quick-btn" @click="quickAdminLogin">
-          管理员登录（admin / 123456）
-        </el-button>
       </el-form>
     </el-card>
 
@@ -259,23 +254,6 @@ const handleResetPassword = async () => {
   }
 }
 
-const quickAdminLogin = async () => {
-  loading.value = true
-  try {
-    const res = await api.post('/api/login', {
-      userName: 'admin',
-      userPassword: '123456',
-    })
-    ElMessage.success('管理员登录成功！')
-    saveUserInfo(res.data)
-    navigateAfterLogin(res.data.userType)
-  } catch (err) {
-    const detail = err.response?.data?.detail
-    ElMessage.error(detail || '登录失败，请稍后重试')
-  } finally {
-    loading.value = false
-  }
-}
 </script>
 
 <style scoped>
@@ -318,10 +296,6 @@ const quickAdminLogin = async () => {
 
 .tab-item:hover {
   color: #409EFF;
-}
-
-.quick-btn {
-  width: 100%;
 }
 
 .sms-row {

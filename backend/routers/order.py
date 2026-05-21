@@ -227,7 +227,7 @@ def update_order(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """修改订单 — 顾客只能改联系方式/备注（仅限待处理状态），管理员可改状态"""
+    """修改订单 — 顾客可取消自己的未支付订单，或修改联系方式/备注（仅限未支付），管理员可改状态"""
     order = db.query(Order).filter(Order.orderId == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="订单不存在")
@@ -238,9 +238,12 @@ def update_order(
     if not is_admin:
         if order.userId != current_user.userId:
             raise HTTPException(status_code=403, detail="无权修改此订单")
-        if order.orderStatus != 0:                             # status=0（待处理）才允许改
+        if order.orderStatus != 0:
             raise HTTPException(status_code=400, detail="订单状态不允许修改")
-        if data.orderStatus is not None:                       # 顾客不允许改状态字段
+        # 顾客可取消自己的未支付订单
+        if data.orderStatus == 4:
+            _restore_stock(order, db)
+        elif data.orderStatus is not None:
             raise HTTPException(status_code=403, detail="无权修改订单状态")
 
     # ── 管理员改状态时自动记录时间 ──
@@ -278,23 +281,17 @@ def delete_order(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
-    """删除订单 — 顾客只能删已完成/已取消的，管理员删非终态订单会恢复库存"""
+    """删除订单 — 只能删除已完成或已取消的订单"""
     order = db.query(Order).filter(Order.orderId == order_id).first()
     if not order:
         raise HTTPException(status_code=404, detail="订单不存在")
 
     is_admin = current_user.userType == 1
 
-    if not is_admin:
-        if order.userId != current_user.userId:
-            raise HTTPException(status_code=403, detail="无权删除此订单")
-        # 顾客只能删终态订单（已完成3 或 已取消4）
-        if order.orderStatus not in (3, 4):
-            raise HTTPException(status_code=400, detail="只能删除已完成或已取消的订单")
-    else:
-        # 管理员删未完成订单 → 先恢复库存
-        if order.orderStatus not in (3, 4):
-            _restore_stock(order, db)
+    if not is_admin and order.userId != current_user.userId:
+        raise HTTPException(status_code=403, detail="无权删除此订单")
+    if order.orderStatus not in (3, 4):
+        raise HTTPException(status_code=400, detail="只能删除已完成或已取消的订单")
 
     db.delete(order)
     db.commit()

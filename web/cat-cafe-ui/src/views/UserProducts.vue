@@ -8,6 +8,10 @@
         <el-option label="餐饮" :value="1" />
         <el-option label="猫咪用品" :value="2" />
       </el-select>
+      <el-select v-model="sortBy" style="width: 140px" @change="fetchProducts">
+        <el-option label="默认排序" value="default" />
+        <el-option label="点赞最多" value="likeCount" />
+      </el-select>
       <el-input
         v-model="keyword"
         placeholder="搜索商品名"
@@ -114,11 +118,12 @@ const products = ref([])
 const loading = ref(false)
 const category = ref(null)
 const keyword = ref('')
+const sortBy = ref('default')
 
 const fetchProducts = async () => {
   loading.value = true
   try {
-    const params = {}
+    const params = { sortBy: sortBy.value }
     if (category.value !== null) params.category = category.value
     if (keyword.value) params.keyword = keyword.value
     const [productRes, myLikesRes] = await Promise.all([
@@ -192,6 +197,10 @@ const submitOrder = async () => {
   }
   if (!orderForm.value.userPhone.trim()) {
     ElMessage.warning('请输入手机号')
+    return
+  }
+  if (!/^1[3-9]\d{9}$/.test(orderForm.value.userPhone.trim())) {
+    ElMessage.warning('请输入正确的11位手机号')
     return
   }
   submitting.value = true

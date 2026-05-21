@@ -7,9 +7,27 @@ FastAPI 收到请求后自动用这些模型校验数据，不合规的直接 42
   schemas.py → 校验 HTTP 请求/响应（Pydantic），不直接操作数据库
 """
 
+import re
 from datetime import datetime, date
 from decimal import Decimal
-from pydantic import BaseModel, ConfigDict, Field
+from typing import Annotated
+from pydantic import BaseModel, ConfigDict, Field, AfterValidator
+
+
+def _check_birthday(v: date | None) -> date | None:
+    if v is not None and v > date.today():
+        raise ValueError("生日不能设置为未来日期")
+    return v
+
+
+def _check_phone(v: str | None) -> str | None:
+    if v is not None and v and not re.match(r'^1[3-9]\d{9}$', v):
+        raise ValueError("手机号格式不正确")
+    return v
+
+
+BirthdayField = Annotated[date | None, AfterValidator(_check_birthday)]
+PhoneField = Annotated[str | None, AfterValidator(_check_phone)]
 
 
 # ============================================
@@ -69,8 +87,8 @@ class UserUpdate(BaseModel):
     """修改个人信息 — 全部可选"""
     userName: str | None = Field(None, min_length=1, max_length=50)
     gender: int | None = Field(None, ge=1, le=2)
-    birthday: date | None = None
-    userPhone: str | None = Field(None, max_length=20)
+    birthday: BirthdayField = None
+    userPhone: PhoneField = Field(None, max_length=20)
     userAvatar: str | None = Field(None, max_length=255)
 
 
@@ -115,8 +133,8 @@ class AdminUserUpdate(BaseModel):
     """管理员编辑用户信息 — 全部可选"""
     userName: str | None = Field(None, min_length=1, max_length=50)
     gender: int | None = Field(None, ge=1, le=2)
-    birthday: date | None = None
-    userPhone: str | None = Field(None, max_length=20)
+    birthday: BirthdayField = None
+    userPhone: PhoneField = Field(None, max_length=20)
     userAvatar: str | None = Field(None, max_length=255)
 
 
@@ -132,7 +150,7 @@ class PaginatedUsers(BaseModel):
 class CatCreate(BaseModel):
     catName: str = Field(min_length=1, max_length=50)
     breed: str = Field(max_length=50)
-    birthday: date
+    birthday: BirthdayField
     status: int = Field(default=1, ge=0, le=1)
     personality: str
     photoUrl: str = Field(max_length=255)
@@ -143,7 +161,7 @@ class CatUpdate(BaseModel):
     """修改猫咪信息 — 全部可选"""
     catName: str | None = Field(None, min_length=1, max_length=50)
     breed: str | None = Field(None, max_length=50)
-    birthday: date | None = None
+    birthday: BirthdayField = None
     status: int | None = Field(None, ge=0, le=1)
     personality: str | None = None
     photoUrl: str | None = Field(None, max_length=255)

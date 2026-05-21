@@ -13,9 +13,15 @@ router = APIRouter(prefix="/api", tags=["猫咪模块"])
 
 
 @router.get("/cats", response_model=PaginatedCats)
-def list_cats(keyword: str | None = None, includeAll: bool = False, skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
-    """公开接口 — 查看猫咪列表，只返回在岗(status=1)的猫咪，支持关键字搜索"""
-    q = db.query(Catinformation)
+def list_cats(keyword: str | None = None, includeAll: bool = False, sortBy: str = "default",
+              skip: int = 0, limit: int = 20, db: Session = Depends(get_db)):
+    """公开接口 — 查看猫咪列表，只返回在岗(status=1)的猫咪，支持关键字搜索和按点赞排序"""
+    # 点赞数子查询
+    like_sub = db.query(Likes.objectId, func.count(Likes.likeId).label('cnt')).filter(
+        Likes.likeType == 2
+    ).group_by(Likes.objectId).subquery()
+
+    q = db.query(Catinformation).outerjoin(like_sub, Catinformation.catId == like_sub.c.objectId)
     if not includeAll:
         q = q.filter(Catinformation.status == 1)
     if keyword:
@@ -26,7 +32,11 @@ def list_cats(keyword: str | None = None, includeAll: bool = False, skip: int = 
             | Catinformation.personality.like(like)
         )
     total = q.count()
-    cats = q.order_by(Catinformation.catId.desc()).offset(skip).limit(limit).all()
+    if sortBy == "likeCount":
+        q = q.order_by(func.coalesce(like_sub.c.cnt, 0).desc(), Catinformation.catId.desc())
+    else:
+        q = q.order_by(Catinformation.catId.desc())
+    cats = q.offset(skip).limit(limit).all()
 
     # 批量查询点赞数
     cat_ids = [c.catId for c in cats]

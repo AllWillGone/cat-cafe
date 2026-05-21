@@ -45,14 +45,15 @@
         </template>
       </el-table-column>
       <el-table-column prop="orderTime" label="时间" width="170" />
-      <el-table-column label="操作" width="80" fixed="right">
+      <el-table-column label="操作" width="180" fixed="right">
         <template #default="{ row }">
-          <el-button
-            v-if="row.orderStatus === 0"
-            size="small"
-            type="primary"
-            @click="openPayDialog(row)"
-          >支付</el-button>
+          <template v-if="row.orderStatus === 0">
+            <el-button size="small" type="primary" @click="openPayDialog(row)">支付</el-button>
+            <el-button size="small" type="danger" @click="cancelOrder(row)">取消</el-button>
+          </template>
+          <template v-else-if="row.orderStatus === 3 || row.orderStatus === 4">
+            <el-button size="small" type="danger" plain @click="deleteOrder(row)">删除</el-button>
+          </template>
         </template>
       </el-table-column>
     </el-table>
@@ -70,7 +71,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import api from '../api/index'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
 
 const orders = ref([])
 const loading = ref(false)
@@ -102,6 +103,48 @@ const openPayDialog = (row) => {
   payingAmount.value = row.totalAmount
   qrCodeUrl.value = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=PAY_${row.batchNo || 'N/A'}_${row.totalAmount}`
   payDialogVisible.value = true
+}
+
+const cancelOrder = async (row) => {
+  const batchNo = row.batchNo || 'N/A'
+  try {
+    await ElMessageBox.confirm(`确定要取消该订单吗？（批次号: ${batchNo.slice(0, 12)}...）`, '确认取消', {
+      confirmButtonText: '确认取消',
+      cancelButtonText: '返回',
+      confirmButtonClass: 'el-button--danger',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
+  try {
+    await api.put(`/api/orders/${row.items[0].orderId}`, { orderStatus: 4 })
+    ElMessage.success('订单已取消')
+    fetchOrders()
+  } catch (err) {
+    ElMessage.error(err.response?.data?.detail || '取消失败')
+  }
+}
+
+const deleteOrder = async (row) => {
+  const batchNo = row.batchNo || 'N/A'
+  try {
+    await ElMessageBox.confirm(`确定要删除该订单吗？（批次号: ${batchNo.slice(0, 12)}...）`, '确认删除', {
+      confirmButtonText: '确认删除',
+      cancelButtonText: '返回',
+      confirmButtonClass: 'el-button--danger',
+      type: 'warning',
+    })
+  } catch {
+    return
+  }
+  try {
+    await api.delete(`/api/orders/${row.items[0].orderId}`)
+    ElMessage.success('订单已删除')
+    fetchOrders()
+  } catch (err) {
+    ElMessage.error(err.response?.data?.detail || '删除失败')
+  }
 }
 
 onMounted(() => fetchOrders())
