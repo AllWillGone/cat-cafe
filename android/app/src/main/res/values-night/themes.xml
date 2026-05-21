@@ -4,6 +4,10 @@
         <item name="colorPrimary">@color/cat_primary</item>
         <item name="colorPrimaryVariant">@color/cat_primary_dark</item>
         <item name="colorSecondary">@color/cat_accent</item>
+        <item name="colorSurface">@color/white</item>
+        <item name="colorOnSurface">@color/cat_text</item>
+        <item name="colorOutline">@color/cat_border</item>
+        <item name="android:windowBackground">@color/cat_surface</item>
         <item name="android:fontFamily">sans</item>
     </style>
 </resources>

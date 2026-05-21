@@ -3,6 +3,8 @@ package com.catcafe.app.ui;
 import com.catcafe.app.model.ProductDetail;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Locale;
@@ -19,6 +21,8 @@ public final class ProductRules {
         String name = product.productName.toLowerCase(Locale.ROOT);
         return name.contains("撸猫券")
                 || name.contains("撸猫卷")
+                || name.contains("猫咖券")
+                || name.contains("猫咖卷")
                 || name.contains("cat cafe ticket")
                 || name.contains("cat ticket");
     }
@@ -54,9 +58,41 @@ public final class ProductRules {
                                                           int limit) {
         List<ProductDetail> result = new ArrayList<>();
         Set<Long> added = new HashSet<>();
-        append(result, added, catCafeTickets(serviceSource), 1);
-        append(result, added, productsWithoutTickets(productSource), limit);
+        appendFirst(result, added, catCafeTickets(serviceSource));
+        if (result.isEmpty()) {
+            appendFirst(result, added, catCafeTickets(productSource));
+        }
+        append(result, added, sortByLikes(productsWithoutTickets(productSource)), limit);
         return result;
+    }
+
+    private static List<ProductDetail> sortByLikes(List<ProductDetail> products) {
+        List<ProductDetail> sorted = products == null ? new ArrayList<>() : new ArrayList<>(products);
+        Collections.sort(sorted, new Comparator<ProductDetail>() {
+            @Override
+            public int compare(ProductDetail left, ProductDetail right) {
+                int byLikes = Integer.compare(right.likeCount, left.likeCount);
+                if (byLikes != 0) {
+                    return byLikes;
+                }
+                return Long.compare(right.productId, left.productId);
+            }
+        });
+        return sorted;
+    }
+
+    private static void appendFirst(List<ProductDetail> result, Set<Long> added, List<ProductDetail> source) {
+        if (source == null) {
+            return;
+        }
+        for (ProductDetail product : source) {
+            if (product == null || added.contains(product.productId)) {
+                continue;
+            }
+            result.add(product);
+            added.add(product.productId);
+            return;
+        }
     }
 
     private static void append(List<ProductDetail> result, Set<Long> added, List<ProductDetail> source, int limit) {

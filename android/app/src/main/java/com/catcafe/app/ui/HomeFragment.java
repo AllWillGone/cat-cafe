@@ -30,6 +30,8 @@ import com.catcafe.app.ui.adapter.ProductAdapter;
 import com.google.android.material.button.MaterialButton;
 
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 public class HomeFragment extends Fragment {
@@ -37,6 +39,9 @@ public class HomeFragment extends Fragment {
     private android.content.Context appContext;
     private TextView welcomeText;
     private TextView cartBadge;
+    private MaterialButton loginButton;
+    private MaterialButton cartButton;
+    private MaterialButton adminButton;
     private CatAdapter catAdapter;
     private ProductAdapter productAdapter;
     private List<ProductDetail> serviceProducts = new ArrayList<>();
@@ -53,9 +58,9 @@ public class HomeFragment extends Fragment {
         sessionManager = new SessionManager(requireContext());
         welcomeText = view.findViewById(R.id.welcomeText);
         cartBadge = view.findViewById(R.id.homeCartBadge);
-        MaterialButton loginButton = view.findViewById(R.id.homeLoginButton);
-        MaterialButton cartButton = view.findViewById(R.id.homeCartButton);
-        MaterialButton adminButton = view.findViewById(R.id.homeAdminButton);
+        loginButton = view.findViewById(R.id.homeLoginButton);
+        cartButton = view.findViewById(R.id.homeCartButton);
+        adminButton = view.findViewById(R.id.homeAdminButton);
 
         RecyclerView catList = view.findViewById(R.id.homeCatList);
         RecyclerView productList = view.findViewById(R.id.homeProductList);
@@ -78,7 +83,7 @@ public class HomeFragment extends Fragment {
 
         catList.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
         catList.setAdapter(catAdapter);
-        productList.setLayoutManager(new LinearLayoutManager(requireContext(), LinearLayoutManager.HORIZONTAL, false));
+        productList.setLayoutManager(new LinearLayoutManager(requireContext()));
         productList.setAdapter(productAdapter);
 
         loginButton.setOnClickListener(v -> ((MainActivity) requireActivity()).openMinePage());
@@ -92,6 +97,7 @@ public class HomeFragment extends Fragment {
         adminButton.setOnClickListener(v -> startActivity(new android.content.Intent(requireContext(), AdminAuthActivity.class)));
 
         refreshWelcome();
+        renderHomeActions();
         refreshCartCount();
         loadHomeData();
         return view;
@@ -101,6 +107,7 @@ public class HomeFragment extends Fragment {
     public void onResume() {
         super.onResume();
         refreshWelcome();
+        renderHomeActions();
         refreshCartCount();
         if (productAdapter != null) {
             productAdapter.refreshQuantities();
@@ -146,6 +153,29 @@ public class HomeFragment extends Fragment {
         }
     }
 
+    private void renderHomeActions() {
+        if (loginButton == null || cartButton == null || adminButton == null) {
+            return;
+        }
+        if (!sessionManager.isLoggedIn()) {
+            loginButton.setText("登录");
+            loginButton.setVisibility(View.VISIBLE);
+            cartButton.setVisibility(View.VISIBLE);
+            adminButton.setVisibility(View.VISIBLE);
+            return;
+        }
+        if (sessionManager.isAdmin()) {
+            loginButton.setText("我的信息");
+            loginButton.setVisibility(View.VISIBLE);
+            cartButton.setVisibility(View.GONE);
+            adminButton.setVisibility(View.GONE);
+            return;
+        }
+        loginButton.setVisibility(View.GONE);
+        cartButton.setVisibility(View.VISIBLE);
+        adminButton.setVisibility(View.GONE);
+    }
+
     private void refreshCartCount() {
         if (sessionManager.isAdmin()) {
             cartBadge.setVisibility(View.GONE);
@@ -173,7 +203,7 @@ public class HomeFragment extends Fragment {
                         if (!isAdded()) {
                             return;
                         }
-                        catAdapter.submitList(data.items);
+                        catAdapter.submitList(sortCatsByLikes(data.items));
                     }
 
                     @Override
@@ -235,5 +265,20 @@ public class HomeFragment extends Fragment {
             return;
         }
         productAdapter.submitList(ProductRules.recommendedProducts(serviceProducts, allProducts, 3));
+    }
+
+    private List<CatDetail> sortCatsByLikes(List<CatDetail> cats) {
+        List<CatDetail> sorted = cats == null ? new ArrayList<>() : new ArrayList<>(cats);
+        Collections.sort(sorted, new Comparator<CatDetail>() {
+            @Override
+            public int compare(CatDetail left, CatDetail right) {
+                int byLikes = Integer.compare(right.likeCount, left.likeCount);
+                if (byLikes != 0) {
+                    return byLikes;
+                }
+                return Long.compare(right.catId, left.catId);
+            }
+        });
+        return sorted;
     }
 }

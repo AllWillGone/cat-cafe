@@ -32,16 +32,23 @@ public class CatAdapter extends RecyclerView.Adapter<CatAdapter.VH> {
     private final Context context;
     private final OnCatClickListener listener;
     private final OnCatLikeBindListener likeBindListener;
+    private final boolean fullWidth;
     private final List<CatDetail> items = new ArrayList<>();
 
     public CatAdapter(Context context, OnCatClickListener listener) {
-        this(context, listener, null);
+        this(context, listener, null, false);
     }
 
     public CatAdapter(Context context, OnCatClickListener listener, OnCatLikeBindListener likeBindListener) {
+        this(context, listener, likeBindListener, false);
+    }
+
+    public CatAdapter(Context context, OnCatClickListener listener,
+                      OnCatLikeBindListener likeBindListener, boolean fullWidth) {
         this.context = context;
         this.listener = listener;
         this.likeBindListener = likeBindListener;
+        this.fullWidth = fullWidth;
     }
 
     public void submitList(List<CatDetail> data) {
@@ -62,6 +69,11 @@ public class CatAdapter extends RecyclerView.Adapter<CatAdapter.VH> {
     @Override
     public void onBindViewHolder(@NonNull VH holder, int position) {
         CatDetail cat = items.get(position);
+        ViewGroup.LayoutParams params = holder.itemView.getLayoutParams();
+        if (params != null && fullWidth) {
+            params.width = ViewGroup.LayoutParams.MATCH_PARENT;
+            holder.itemView.setLayoutParams(params);
+        }
         holder.name.setText(cat.catName);
         holder.detail.setText(UiText.safeJoin(cat.breed, UiText.catStatus(cat.status), " · "));
         holder.likeCount.setText(String.valueOf(cat.likeCount));

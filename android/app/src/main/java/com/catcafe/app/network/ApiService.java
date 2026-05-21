@@ -69,6 +69,9 @@ public interface ApiService {
     @PUT("api/user/me/password")
     Call<java.util.Map<String, Object>> changePassword(@Body ChangePasswordRequest request);
 
+    @DELETE("api/user/me")
+    Call<java.util.Map<String, Object>> deleteMe();
+
     @POST("api/send-sms-code")
     Call<java.util.Map<String, Object>> sendSmsCode(@Body SendSmsCodeRequest request);
 

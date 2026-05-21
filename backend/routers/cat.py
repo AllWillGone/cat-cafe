@@ -7,6 +7,7 @@ from database import get_db
 from models import Catinformation, User, Likes
 from schemas import CatCreate, CatUpdate, CatResponse, PaginatedCats
 from auth import get_current_admin
+from cleanup import delete_comments_for_target, delete_likes_for_object
 
 router = APIRouter(prefix="/api", tags=["猫咪模块"])
 
@@ -128,6 +129,8 @@ def delete_cat(
     cat = db.query(Catinformation).filter(Catinformation.catId == cat_id).first()
     if not cat:
         raise HTTPException(status_code=404, detail="猫咪不存在")
+    delete_likes_for_object(db, 2, cat_id)
+    delete_comments_for_target(db, 1, cat_id)
     db.delete(cat)   # 标记删除
     db.commit()      # 提交，真正从数据库移除
     return {"message": "猫咪信息已删除"}

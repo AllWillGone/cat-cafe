@@ -1,8 +1,10 @@
 package com.catcafe.app.ui;
 
+import android.app.Activity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageButton;
 import android.widget.TextView;
 
 import androidx.annotation.NonNull;
@@ -16,8 +18,10 @@ import java.util.List;
 
 public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.VH> {
     private final List<CommentDetail> items = new ArrayList<>();
+    private final Activity activity;
 
-    public CommentAdapter(List<CommentDetail> data) {
+    public CommentAdapter(Activity activity, List<CommentDetail> data) {
+        this.activity = activity;
         if (data != null) {
             items.addAll(data);
         }
@@ -36,6 +40,7 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.VH> {
         holder.author.setText(comment.userName == null || comment.userName.trim().isEmpty() ? "用户" : comment.userName);
         holder.content.setText(comment.content == null ? "" : comment.content);
         holder.meta.setText(comment.publishTime == null ? "" : comment.publishTime);
+        new LikeController(activity, 1, comment.commentId, comment.likeCount, holder.likeCount, holder.likeButton).bind();
     }
 
     @Override
@@ -47,12 +52,16 @@ public class CommentAdapter extends RecyclerView.Adapter<CommentAdapter.VH> {
         TextView author;
         TextView content;
         TextView meta;
+        TextView likeCount;
+        ImageButton likeButton;
 
         VH(@NonNull View itemView) {
             super(itemView);
             author = itemView.findViewById(R.id.commentAuthor);
             content = itemView.findViewById(R.id.commentContent);
             meta = itemView.findViewById(R.id.commentMeta);
+            likeCount = itemView.findViewById(R.id.commentLikeCount);
+            likeButton = itemView.findViewById(R.id.commentLikeButton);
         }
     }
 }

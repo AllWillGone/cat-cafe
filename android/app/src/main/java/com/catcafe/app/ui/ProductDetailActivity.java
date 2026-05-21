@@ -11,6 +11,7 @@ import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import com.bumptech.glide.Glide;
 import com.catcafe.app.R;
@@ -27,8 +28,21 @@ public class ProductDetailActivity extends BaseDetailActivity {
     private static final String EXTRA_ID = "product_id";
 
     private long productId;
+    private SwipeRefreshLayout refreshLayout;
+    private ImageView image;
+    private TextView name;
+    private TextView meta;
+    private TextView price;
+    private TextView desc;
+    private TextView stock;
+    private TextView likes;
+    private MaterialButton addButton;
+    private MaterialButton commentButton;
+    private ImageButton likeButton;
     private RecyclerView commentList;
     private TextView commentEmpty;
+    private int refreshRequestsPending;
+    private boolean hasResumedOnce;
 
     public static Intent intent(Context context, long id) {
         return new Intent(context, ProductDetailActivity.class).putExtra(EXTRA_ID, id);
@@ -41,23 +55,46 @@ public class ProductDetailActivity extends BaseDetailActivity {
         setupToolbar(R.id.productDetailToolbar);
 
         productId = getIntent().getLongExtra(EXTRA_ID, 0L);
-        ImageView image = findViewById(R.id.productDetailImage);
-        TextView name = findViewById(R.id.productDetailName);
-        TextView meta = findViewById(R.id.productDetailMeta);
-        TextView price = findViewById(R.id.productDetailPrice);
-        TextView desc = findViewById(R.id.productDetailDesc);
-        TextView stock = findViewById(R.id.productDetailStock);
-        TextView likes = findViewById(R.id.productDetailLikes);
-        MaterialButton addButton = findViewById(R.id.productDetailAddButton);
-        MaterialButton commentButton = findViewById(R.id.productDetailCommentButton);
-        ImageButton likeButton = findViewById(R.id.productDetailLikeButton);
+        refreshLayout = findViewById(R.id.productDetailRefresh);
+        image = findViewById(R.id.productDetailImage);
+        name = findViewById(R.id.productDetailName);
+        meta = findViewById(R.id.productDetailMeta);
+        price = findViewById(R.id.productDetailPrice);
+        desc = findViewById(R.id.productDetailDesc);
+        stock = findViewById(R.id.productDetailStock);
+        likes = findViewById(R.id.productDetailLikes);
+        addButton = findViewById(R.id.productDetailAddButton);
+        commentButton = findViewById(R.id.productDetailCommentButton);
+        likeButton = findViewById(R.id.productDetailLikeButton);
         commentList = findViewById(R.id.productDetailCommentList);
         commentEmpty = findViewById(R.id.productDetailCommentEmpty);
         commentList.setLayoutManager(new LinearLayoutManager(this));
+        refreshLayout.setOnRefreshListener(this::refreshDetailPage);
 
+        refreshDetailPage();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (hasResumedOnce && productId > 0 && commentList != null) {
+            loadComments(false);
+        }
+        hasResumedOnce = true;
+    }
+
+    private void refreshDetailPage() {
+        refreshLayout.setRefreshing(true);
+        refreshRequestsPending = 2;
+        loadProduct(true);
+        loadComments(true);
+    }
+
+    private void loadProduct(boolean trackRefresh) {
         NetworkHelper.enqueue(this, ApiClient.getService(this).getProduct(productId), new ApiCallback<ProductDetail>() {
             @Override
             public void onSuccess(ProductDetail data) {
+                finishRefreshRequest(trackRefresh);
                 name.setText(data.productName);
                 meta.setText(UiText.productCategory(data.category) + " · " + UiText.productStatus(data.status));
                 price.setText(UiText.productPrice(data));
@@ -97,38 +134,42 @@ public class ProductDetailActivity extends BaseDetailActivity {
                 } else {
                     new LikeController(ProductDetailActivity.this, 0, data.productId, data.likeCount, likes, likeButton).bind();
                 }
-                loadComments();
             }
 
             @Override
             public void onError(String message) {
+                finishRefreshRequest(trackRefresh);
                 Toast.makeText(ProductDetailActivity.this, message, Toast.LENGTH_SHORT).show();
             }
         });
     }
 
-    @Override
-    protected void onResume() {
-        super.onResume();
-        if (productId > 0 && commentList != null) {
-            loadComments();
-        }
-    }
-
-    private void loadComments() {
+    private void loadComments(boolean trackRefresh) {
         NetworkHelper.enqueue(this, ApiClient.getService(this).getComments(0, productId, 0, 20), new ApiCallback<PaginatedComments>() {
             @Override
             public void onSuccess(PaginatedComments data) {
+                finishRefreshRequest(trackRefresh);
                 boolean empty = data.items == null || data.items.isEmpty();
                 commentEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
-                commentList.setAdapter(new CommentAdapter(data.items));
+                commentList.setAdapter(new CommentAdapter(ProductDetailActivity.this, data.items));
             }
 
             @Override
             public void onError(String message) {
+                finishRefreshRequest(trackRefresh);
                 commentEmpty.setVisibility(View.VISIBLE);
                 commentEmpty.setText(message);
             }
         });
+    }
+
+    private void finishRefreshRequest(boolean trackRefresh) {
+        if (!trackRefresh || refreshLayout == null) {
+            return;
+        }
+        refreshRequestsPending = Math.max(0, refreshRequestsPending - 1);
+        if (refreshRequestsPending == 0) {
+            refreshLayout.setRefreshing(false);
+        }
     }
 }

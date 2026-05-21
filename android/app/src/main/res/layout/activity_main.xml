@@ -10,6 +10,7 @@
         android:id="@+id/fragmentContainer"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
+        android:background="@color/cat_surface"
         android:layout_marginBottom="72dp" />
 
     <com.google.android.material.bottomnavigation.BottomNavigationView
@@ -17,6 +18,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="bottom"
+        android:background="@drawable/bg_bottom_nav"
         app:menu="@menu/bottom_nav_menu"
         app:itemIconTint="@color/cat_primary"
         app:itemTextColor="@color/cat_primary"

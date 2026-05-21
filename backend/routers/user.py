@@ -7,7 +7,7 @@ from sqlalchemy.exc import IntegrityError
 from passlib.context import CryptContext
 
 from database import get_db
-from models import User
+from models import User, Order, Comment, Likes
 from schemas import (
     UserLogin, UserRegister, LoginResponse,
     UserDetailResponse, UserUpdate, UserPasswordChange,
@@ -15,6 +15,7 @@ from schemas import (
     AdminUserListItem, AdminUserUpdate, PaginatedUsers,
 )
 from auth import create_access_token, get_current_user, get_current_admin
+from cleanup import delete_comment_likes_for_user
 
 router = APIRouter(prefix="/api", tags=["用户模块"])
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -194,6 +195,18 @@ def delete_me(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ):
+    orders = db.query(Order).filter(Order.userId == current_user.userId).all()
+    blocking_statuses = sorted({order.orderStatus for order in orders if order.orderStatus not in (1, 3)})
+    if blocking_statuses:
+        raise HTTPException(
+            status_code=400,
+            detail="存在未完成或不可删除的订单，暂时无法注销账号",
+        )
+
+    delete_comment_likes_for_user(db, current_user.userId)
+    db.query(Likes).filter(Likes.userId == current_user.userId).delete(synchronize_session=False)
+    db.query(Comment).filter(Comment.userId == current_user.userId).delete(synchronize_session=False)
+    db.query(Order).filter(Order.userId == current_user.userId).delete(synchronize_session=False)
     db.delete(current_user)
     db.commit()
     return {"message": "账户已注销"}
@@ -285,6 +298,7 @@ def admin_delete_user(
     target = db.query(User).filter(User.userId == user_id).first()
     if not target:
         raise HTTPException(status_code=404, detail="用户不存在")
+    delete_comment_likes_for_user(db, user_id)
     db.delete(target)
     try:
         db.commit()

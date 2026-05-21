@@ -3,6 +3,7 @@
     xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:background="@color/cat_surface"
     android:orientation="vertical"
     android:padding="12dp">
 
@@ -18,7 +19,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="商品" />
+            android:text="商品"
+            app:strokeColor="@color/cat_border" />
 
         <com.google.android.material.button.MaterialButton
             android:id="@+id/tabCats"
@@ -26,7 +28,8 @@
             android:layout_width="0dp"
             android:layout_height="wrap_content"
             android:layout_weight="1"
-            android:text="猫咖" />
+            android:text="猫咖"
+            app:strokeColor="@color/cat_border" />
     </com.google.android.material.button.MaterialButtonToggleGroup>
 
     <FrameLayout
@@ -39,7 +42,9 @@
             style="?attr/materialButtonOutlinedStyle"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="购物车" />
+            android:text="购物车"
+            android:textColor="@color/cat_primary"
+            app:strokeColor="@color/cat_border" />
 
         <TextView
             android:id="@+id/serviceCartBadge"
@@ -63,6 +68,8 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
         android:text="撸猫券"
+        android:textColor="@color/cat_text"
+        android:textSize="16sp"
         android:textStyle="bold"
         android:visibility="gone" />
 
@@ -78,7 +85,9 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="12dp"
-        android:text="猫咪信息"
+        android:text="人气猫咪"
+        android:textColor="@color/cat_text"
+        android:textSize="16sp"
         android:textStyle="bold"
         android:visibility="gone" />
 
