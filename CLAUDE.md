@@ -56,7 +56,11 @@ cd web/cat-cafe-ui && npm run dev
 
 MySQL 数据库和数据表在容器首次启动时自动创建（init.sql 和 seed_demo_media.sql 自动导入）。详见 `.devcontainer/` 和 `docker-compose.yml`。
 
+容器端口映射：`8000`（后端）、`5173`（前端 dev server）、`3306`（MySQL）。
+
 ### 生产服务器
+
+> Docker 配置文件在 `docker-deploy` 分支（尚未合并 main），包括 `docker-compose.prod.yml`、`backend/Dockerfile.prod`、`nginx/`。
 
 阿里云 ECS Ubuntu 24.04，2核2G，IP: `47.86.228.41`，域名: `pixelcat.tech`。
 
@@ -110,6 +114,36 @@ web/cat-cafe-ui/ Vue 3 + Element Plus + Vite 管理端（组员 C）
 database/        init.sql（建表）+ seed_demo_media.sql（演示数据）
 docs/            开发日志、需求分析
 ```
+
+**Web 前端路由：**
+
+| 路由 | 页面 | 说明 |
+|------|------|------|
+| `/login` | login.vue | 登录 |
+| `/signup` | signupOrdinaryUser.vue | 注册 |
+| `/home/index` | UserIndex.vue | 顾客首页 |
+| `/home/cats` | UserCats.vue | 猫咪列表 |
+| `/home/cats/:id` | CatDetail.vue | 猫咪详情 |
+| `/home/products` | UserProducts.vue | 商品列表 |
+| `/home/products/:id` | ProductDetail.vue | 商品详情 |
+| `/home/orders` | UserOrders.vue | 我的订单 |
+| `/home/likes` | UserLikes.vue | 我的点赞 |
+| `/home/profile` | UserProfile.vue | 个人信息 |
+| `/admin/users` | adminUsers.vue | 用户管理 |
+| `/admin/comments` | adminComments.vue | 评论审核 |
+| `/admin/orders` | adminOrders.vue | 订单管理 |
+| `/admin/cats` | adminCats.vue | 猫咪管理 |
+| `/admin/products` | adminProducts.vue | 商品管理 |
+
+**Android 代码分层：**
+
+| 包 | 说明 |
+|---|---|
+| `core/` | AppConfig（API 地址）、SessionManager（token 存储）、CartManager（购物车） |
+| `model/` | 请求/响应数据类，与后端 schemas 对应 |
+| `network/` | Retrofit ApiService 接口定义 + ApiClient 单例 |
+| `ui/` | Activity + Fragment + Adapter，按页面拆分 |
+| `util/` | UiText 文本工具 |
 
 ### 技术栈
 
