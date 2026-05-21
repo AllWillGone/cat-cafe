@@ -27,6 +27,15 @@ cd android
 
 模拟器需先执行 `adb reverse tcp:8000 tcp:8000` 转发后端端口。API 地址集中在 `app/build.gradle` 的 `BuildConfig`。
 
+**Android 构建类型：**
+
+| 构建 | 命令 | API 地址 | 用途 |
+|------|------|---------|------|
+| Debug | `assembleDebug` | 可切换 | 默认用服务器 IP，模拟器开发改回 `127.0.0.1:8000` |
+| Release | `assembleRelease` | `47.86.228.41` | 真机 / 发版 |
+
+在 `app/build.gradle` 的 `buildTypes` 中切换 debug 的 `buildConfigField`。
+
 **Web 管理端：**
 
 ```bash
@@ -162,6 +171,8 @@ docs/            开发日志、需求分析
 - 建表用 init.sql 手动执行，不用 SQLAlchemy create_all
 - 数据库字段 camelCase，接口路径 kebab-case
 - 后端直接托管 `web/cat-cafe-ui/public` 下的 `/cats`、`/products`、`/avatars` 静态资源
+- 管理员可通过 `POST /api/admin/upload` 上传图片（Web 端有文件选择器，无需手动输路径）
+- Docker 生产环境：backend 和 nginx 通过 `./uploads/` 共享目录传递上传文件
 
 ### 接口总览（39 个 /api 接口，全部完成）
 

@@ -47,9 +47,9 @@ android {
 
     buildTypes {
         debug {
-            // 模拟器通过 adb reverse 访问本机后端
-            buildConfigField "String", "API_BASE_URL", "\"http://127.0.0.1:8000/\""
-            buildConfigField "String", "IMAGE_BASE_URL", "\"http://127.0.0.1:8000\""
+            // 真机测试用服务器 IP；模拟器开发改回 127.0.0.1:8000
+            buildConfigField "String", "API_BASE_URL", "\"http://47.86.228.41/\""
+            buildConfigField "String", "IMAGE_BASE_URL", "\"http://47.86.228.41\""
         }
         release {
             minifyEnabled false
