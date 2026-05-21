@@ -3,6 +3,10 @@ package com.catcafe.app.ui;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.View;
+import android.widget.ArrayAdapter;
+import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -14,8 +18,16 @@ import com.catcafe.app.model.PaginatedLikes;
 import com.catcafe.app.network.ApiCallback;
 import com.catcafe.app.network.ApiClient;
 import com.catcafe.app.network.NetworkHelper;
+import com.google.android.material.button.MaterialButton;
+import com.google.android.material.textfield.TextInputEditText;
 
 public class LikesActivity extends BaseToolbarActivity {
+    private final String[] typeLabels = {"全部点赞", "商品", "评论", "猫咪"};
+    private RecyclerView list;
+    private TextView empty;
+    private Spinner typeFilter;
+    private TextInputEditText keywordInput;
+
     public static Intent intent(Context context) {
         return new Intent(context, LikesActivity.class);
     }
@@ -25,12 +37,29 @@ public class LikesActivity extends BaseToolbarActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_like_list);
         setupToolbar(R.id.likeToolbar);
-        RecyclerView list = findViewById(R.id.likeList);
-        list.setLayoutManager(new LinearLayoutManager(this));
+        list = findViewById(R.id.likeList);
+        empty = findViewById(R.id.likeListEmpty);
+        typeFilter = findViewById(R.id.likeTypeFilter);
+        keywordInput = findViewById(R.id.likeKeywordInput);
+        MaterialButton searchButton = findViewById(R.id.likeSearchButton);
 
-        NetworkHelper.enqueue(this, ApiClient.getService(this).getLikes(null, null, 0, 50), new ApiCallback<PaginatedLikes>() {
+        list.setLayoutManager(new LinearLayoutManager(this));
+        typeFilter.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, typeLabels));
+        searchButton.setOnClickListener(v -> loadLikes());
+        loadLikes();
+    }
+
+    private void loadLikes() {
+        Integer likeType = selectedLikeType();
+        String keyword = textOf(keywordInput);
+        if (keyword.isEmpty()) {
+            keyword = null;
+        }
+        NetworkHelper.enqueue(this, ApiClient.getService(this).getLikes(likeType, keyword, 0, 50), new ApiCallback<PaginatedLikes>() {
             @Override
             public void onSuccess(PaginatedLikes data) {
+                boolean isEmpty = data.items == null || data.items.isEmpty();
+                empty.setVisibility(isEmpty ? View.VISIBLE : View.GONE);
                 list.setAdapter(new LikeAdapter(data.items, LikesActivity.this::cancelLike, LikesActivity.this::openLikeTarget));
             }
 
@@ -41,6 +70,20 @@ public class LikesActivity extends BaseToolbarActivity {
         });
     }
 
+    private Integer selectedLikeType() {
+        int position = typeFilter.getSelectedItemPosition();
+        if (position == 0) {
+            return null;
+        }
+        if (position == 1) {
+            return 0;
+        }
+        if (position == 2) {
+            return 1;
+        }
+        return 2;
+    }
+
     private void cancelLike(LikeDetail like) {
         NetworkHelper.enqueue(this,
                 ApiClient.getService(this).deleteLike(like.likeId),
@@ -48,7 +91,7 @@ public class LikesActivity extends BaseToolbarActivity {
                     @Override
                     public void onSuccess(java.util.Map<String, Object> result) {
                         Toast.makeText(LikesActivity.this, "已取消点赞", Toast.LENGTH_SHORT).show();
-                        recreate();
+                        loadLikes();
                     }
 
                     @Override
@@ -82,5 +125,9 @@ public class LikesActivity extends BaseToolbarActivity {
         } else {
             Toast.makeText(this, "不支持的目标类型", Toast.LENGTH_SHORT).show();
         }
+    }
+
+    private String textOf(TextInputEditText input) {
+        return input.getText() == null ? "" : input.getText().toString().trim();
     }
 }

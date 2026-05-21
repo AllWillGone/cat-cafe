@@ -28,12 +28,39 @@
             android:layout_marginTop="4dp"
             android:textColor="@color/cat_text" />
 
-        <TextView
-            android:id="@+id/commentMeta"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginTop="6dp"
-            android:textColor="@color/cat_muted"
-            android:textSize="12sp" />
+            android:gravity="center_vertical"
+            android:orientation="horizontal">
+
+            <TextView
+                android:id="@+id/commentMeta"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textColor="@color/cat_muted"
+                android:textSize="12sp" />
+
+            <TextView
+                android:id="@+id/commentLikeCount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:minWidth="24dp"
+                android:gravity="center"
+                android:textColor="@color/cat_muted"
+                android:textSize="12sp" />
+
+            <ImageButton
+                android:id="@+id/commentLikeButton"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:background="?attr/selectableItemBackgroundBorderless"
+                android:contentDescription="点赞"
+                android:padding="8dp"
+                android:src="@drawable/ic_heart_outline_24"
+                app:tint="@color/like_red" />
+        </LinearLayout>
     </LinearLayout>
 </com.google.android.material.card.MaterialCardView>

@@ -21,7 +21,10 @@ import com.catcafe.app.network.ApiCallback;
 import com.catcafe.app.network.ApiClient;
 import com.catcafe.app.network.NetworkHelper;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.imageview.ShapeableImageView;
+
+import java.util.Map;
 
 public class MineFragment extends Fragment {
     private SessionManager sessionManager;
@@ -56,6 +59,7 @@ public class MineFragment extends Fragment {
         MaterialButton passwordButton = view.findViewById(R.id.minePasswordButton);
         MaterialButton likesButton = view.findViewById(R.id.mineLikesButton);
         MaterialButton commentsButton = view.findViewById(R.id.mineCommentsButton);
+        MaterialButton deleteAccountButton = view.findViewById(R.id.mineDeleteAccountButton);
 
         loginButton.setOnClickListener(v ->
                 startActivity(new Intent(requireContext(), AuthActivity.class)));
@@ -70,6 +74,7 @@ public class MineFragment extends Fragment {
         passwordButton.setOnClickListener(v -> startActivity(PasswordActivity.intent(requireContext())));
         likesButton.setOnClickListener(v -> startActivity(LikesActivity.intent(requireContext())));
         commentsButton.setOnClickListener(v -> startActivity(MyCommentsActivity.intent(requireContext())));
+        deleteAccountButton.setOnClickListener(v -> confirmDeleteAccount());
 
         renderState();
         return view;
@@ -120,6 +125,39 @@ public class MineFragment extends Fragment {
                     return;
                 }
                 Toast.makeText(requireContext(), message, Toast.LENGTH_SHORT).show();
+            }
+        });
+    }
+
+    private void confirmDeleteAccount() {
+        new MaterialAlertDialogBuilder(requireContext())
+                .setTitle("注销账号")
+                .setMessage("注销后当前账号将无法继续登录。若账号存在历史订单或其他关联数据，后端可能拒绝注销。")
+                .setNegativeButton("取消", null)
+                .setPositiveButton("确认注销", (dialog, which) -> deleteAccount())
+                .show();
+    }
+
+    private void deleteAccount() {
+        NetworkHelper.enqueue(requireContext(), ApiClient.getService(requireContext()).deleteMe(), new ApiCallback<Map<String, Object>>() {
+            @Override
+            public void onSuccess(Map<String, Object> data) {
+                if (!isAdded()) {
+                    return;
+                }
+                sessionManager.clear();
+                renderState();
+                Toast.makeText(requireContext(), "账号已注销", Toast.LENGTH_SHORT).show();
+            }
+
+            @Override
+            public void onError(String message) {
+                if (!isAdded()) {
+                    return;
+                }
+                Toast.makeText(requireContext(),
+                        message + "，如有历史订单或关联数据，当前账号可能暂不能注销",
+                        Toast.LENGTH_LONG).show();
             }
         });
     }

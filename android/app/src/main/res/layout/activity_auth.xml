@@ -91,6 +91,13 @@
                 android:text="登录" />
 
             <com.google.android.material.button.MaterialButton
+                android:id="@+id/authForgotPasswordButton"
+                style="@style/Widget.MaterialComponents.Button.TextButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="忘记密码" />
+
+            <com.google.android.material.button.MaterialButton
                 android:id="@+id/authSwitchButton"
                 style="?attr/materialButtonOutlinedStyle"
                 android:layout_width="match_parent"

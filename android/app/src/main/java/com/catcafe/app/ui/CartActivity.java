@@ -15,6 +15,7 @@ import com.catcafe.app.core.CartManager;
 import com.catcafe.app.core.SessionManager;
 import com.catcafe.app.model.OrderCreateRequest;
 import com.catcafe.app.model.OrderItemRequest;
+import com.catcafe.app.model.ProductDetail;
 import com.catcafe.app.model.UserDetail;
 import com.catcafe.app.network.ApiCallback;
 import com.catcafe.app.network.ApiClient;
@@ -35,6 +36,7 @@ public class CartActivity extends BaseToolbarActivity {
     private CartAdapter adapter;
     private TextView totalText;
     private SessionManager sessionManager;
+    private boolean submitting;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -65,6 +67,9 @@ public class CartActivity extends BaseToolbarActivity {
             renderTotal();
         });
         submitButton.setOnClickListener(v -> {
+            if (submitting) {
+                return;
+            }
             if (!sessionManager.isLoggedIn()) {
                 Toast.makeText(this, "请先登录后购买", Toast.LENGTH_SHORT).show();
                 startActivity(new Intent(this, AuthActivity.class));
@@ -85,25 +90,74 @@ public class CartActivity extends BaseToolbarActivity {
                 Toast.makeText(this, "请填写收货信息", Toast.LENGTH_SHORT).show();
                 return;
             }
-            NetworkHelper.enqueue(this,
-                    ApiClient.getService(this).createOrder(new OrderCreateRequest(items, 0, userPhone, userName, textOf(noteInput))),
-                    new ApiCallback<com.catcafe.app.model.BatchOrderResponse>() {
-                        @Override
-                        public void onSuccess(com.catcafe.app.model.BatchOrderResponse data) {
-                            cart.clear();
-                            adapter.submit(cart.getItems());
-                            renderTotal();
-                            startActivity(OrderListActivity.intent(CartActivity.this));
-                            finish();
-                            Toast.makeText(CartActivity.this, "下单成功", Toast.LENGTH_SHORT).show();
-                        }
-
-                        @Override
-                        public void onError(String message) {
-                            Toast.makeText(CartActivity.this, message, Toast.LENGTH_SHORT).show();
-                        }
-                    });
+            submitButton.setEnabled(false);
+            submitting = true;
+            refreshCartBeforeSubmit(cartItems, 0, () -> createOrder(items, userPhone, userName, textOf(noteInput), submitButton));
         });
+    }
+
+    private void refreshCartBeforeSubmit(List<CartItem> cartItems, int index, Runnable onReady) {
+        if (index >= cartItems.size()) {
+            onReady.run();
+            return;
+        }
+        CartItem item = cartItems.get(index);
+        NetworkHelper.enqueue(this, ApiClient.getService(this).getProduct(item.product.productId), new ApiCallback<ProductDetail>() {
+            @Override
+            public void onSuccess(ProductDetail product) {
+                if (product.status == 0) {
+                    finishFailedSubmit(product.productName + " 已下架，请从购物车移除后再下单");
+                    return;
+                }
+                if (product.stockQuantity < item.quantity) {
+                    cart.setQuantity(product.productId, product.stockQuantity);
+                    adapter.submit(cart.getItems());
+                    renderTotal();
+                    if (product.stockQuantity <= 0) {
+                        finishFailedSubmit(product.productName + " 库存不足，已从购物车移除");
+                    } else {
+                        finishFailedSubmit(product.productName + " 库存仅剩 " + product.stockQuantity + " 件，已调整数量");
+                    }
+                    return;
+                }
+                refreshCartBeforeSubmit(cartItems, index + 1, onReady);
+            }
+
+            @Override
+            public void onError(String message) {
+                finishFailedSubmit(message);
+            }
+        });
+    }
+
+    private void createOrder(List<OrderItemRequest> items, String userPhone, String userName, String note, MaterialButton submitButton) {
+        NetworkHelper.enqueue(this,
+                ApiClient.getService(this).createOrder(new OrderCreateRequest(items, 0, userPhone, userName, note)),
+                new ApiCallback<com.catcafe.app.model.BatchOrderResponse>() {
+                    @Override
+                    public void onSuccess(com.catcafe.app.model.BatchOrderResponse data) {
+                        submitting = false;
+                        submitButton.setEnabled(true);
+                        cart.clear();
+                        adapter.submit(cart.getItems());
+                        renderTotal();
+                        startActivity(OrderListActivity.intent(CartActivity.this));
+                        finish();
+                        Toast.makeText(CartActivity.this, "下单成功", Toast.LENGTH_SHORT).show();
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        finishFailedSubmit(message);
+                    }
+                });
+    }
+
+    private void finishFailedSubmit(String message) {
+        submitting = false;
+        MaterialButton submitButton = findViewById(R.id.cartSubmitButton);
+        submitButton.setEnabled(true);
+        Toast.makeText(CartActivity.this, message, Toast.LENGTH_SHORT).show();
     }
 
     private void fillUserInfo(TextInputEditText nameInput, TextInputEditText phoneInput) {

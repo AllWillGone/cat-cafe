@@ -110,7 +110,7 @@ public class CatDetailActivity extends BaseToolbarActivity {
             public void onSuccess(PaginatedComments data) {
                 boolean empty = data.items == null || data.items.isEmpty();
                 commentEmpty.setVisibility(empty ? View.VISIBLE : View.GONE);
-                commentList.setAdapter(new CommentAdapter(data.items));
+                commentList.setAdapter(new CommentAdapter(CatDetailActivity.this, data.items));
             }
 
             @Override

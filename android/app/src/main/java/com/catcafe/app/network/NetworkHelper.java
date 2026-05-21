@@ -1,9 +1,14 @@
 package com.catcafe.app.network;
 
+import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.util.Log;
+import android.widget.Toast;
 
 import com.catcafe.app.core.SessionManager;
+import com.catcafe.app.ui.AdminAuthActivity;
+import com.catcafe.app.ui.AuthActivity;
 import com.google.gson.Gson;
 
 import java.io.IOException;
@@ -14,6 +19,7 @@ import retrofit2.Response;
 
 public final class NetworkHelper {
     private static final String TAG = "CatCafeNetwork";
+    private static long lastLoginRedirectAt;
     private NetworkHelper() {
     }
 
@@ -27,7 +33,7 @@ public final class NetworkHelper {
                     return;
                 }
                 if (response.code() == 401) {
-                    new SessionManager(context.getApplicationContext()).clear();
+                    handleUnauthorized(context, call.request().url().encodedPath().startsWith("/api/admin"));
                 }
                 callback.onError(readErrorMessage(response));
             }
@@ -38,6 +44,30 @@ public final class NetworkHelper {
                 callback.onError("网络连接失败，请检查后端服务或网络");
             }
         });
+    }
+
+    private static void handleUnauthorized(Context context, boolean adminRequest) {
+        Context appContext = context.getApplicationContext();
+        new SessionManager(appContext).clear();
+        if (context instanceof AuthActivity || context instanceof AdminAuthActivity) {
+            return;
+        }
+        long now = System.currentTimeMillis();
+        if (now - lastLoginRedirectAt < 1500L) {
+            return;
+        }
+        lastLoginRedirectAt = now;
+        Toast.makeText(appContext, "登录已失效，请重新登录", Toast.LENGTH_SHORT).show();
+        Class<?> loginActivity = adminRequest || context.getClass().getSimpleName().startsWith("Admin")
+                ? AdminAuthActivity.class
+                : AuthActivity.class;
+        Intent intent = new Intent(appContext, loginActivity);
+        intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK | Intent.FLAG_ACTIVITY_CLEAR_TOP);
+        if (context instanceof Activity) {
+            ((Activity) context).startActivity(intent);
+        } else {
+            appContext.startActivity(intent);
+        }
     }
 
     private static String readErrorMessage(Response<?> response) {
