@@ -13,9 +13,18 @@
             <el-avatar :size="80" v-else>
               <span style="font-size:30px">🐱</span>
             </el-avatar>
-            <div style="margin-top:8px">
-              <el-input v-model="form.userAvatar" placeholder="输入头像URL" maxlength="255" style="width:260px" />
+            <div style="margin-top:8px; display: flex; gap: 8px; align-items: center; width: 100%">
+              <el-input v-model="form.userAvatar" placeholder="上传或手动输入路径" maxlength="255" style="flex:1" />
+              <el-upload
+                :show-file-list="false"
+                :before-upload="beforeUpload"
+                :http-request="doUpload"
+                accept="image/*"
+              >
+                <el-button :loading="uploadingPhoto">选择文件</el-button>
+              </el-upload>
             </div>
+            <img v-if="form.userAvatar" :src="form.userAvatar" class="upload-preview" />
           </div>
         </el-form-item>
         <el-form-item label="用户ID">
@@ -72,6 +81,40 @@
 import { ref, reactive, onMounted } from 'vue'
 import api from '../api/index'
 import { ElMessage } from 'element-plus'
+
+const uploadingPhoto = ref(false)
+
+const beforeUpload = (file) => {
+  const isImage = file.type.startsWith('image/')
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件')
+    return false
+  }
+  const isLt5M = file.size / 1024 / 1024 < 5
+  if (!isLt5M) {
+    ElMessage.error('图片大小不能超过 5MB')
+    return false
+  }
+  return true
+}
+
+const doUpload = async (options) => {
+  uploadingPhoto.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file', options.file)
+    fd.append('type', 'avatar')
+    const res = await api.post('/api/admin/upload', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    form.userAvatar = res.data.url
+    ElMessage.success('上传成功')
+  } catch (err) {
+    ElMessage.error(err.response?.data?.detail || '上传失败')
+  } finally {
+    uploadingPhoto.value = false
+  }
+}
 
 const profile = ref({})
 const loading = ref(false)
@@ -187,4 +230,11 @@ onMounted(() => fetchProfile())
 <style scoped>
 .page { max-width: 600px; margin: 0 auto; }
 .avatar-section { display: flex; flex-direction: column; align-items: center; }
+.upload-preview {
+  max-width: 200px;
+  max-height: 120px;
+  margin-top: 8px;
+  border-radius: 4px;
+  display: block;
+}
 </style>
