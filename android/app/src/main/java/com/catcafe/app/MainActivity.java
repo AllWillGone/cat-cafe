@@ -11,6 +11,7 @@ import com.catcafe.app.model.UserDetail;
 import com.catcafe.app.network.ApiCallback;
 import com.catcafe.app.network.ApiClient;
 import com.catcafe.app.network.NetworkHelper;
+import com.catcafe.app.ui.ActivityFragment;
 import com.catcafe.app.ui.HomeFragment;
 import com.catcafe.app.ui.MineFragment;
 import com.catcafe.app.ui.ServiceFragment;
@@ -33,6 +34,9 @@ public class MainActivity extends AppCompatActivity {
                 return true;
             } else if (id == R.id.nav_service) {
                 showFragment(new ServiceFragment());
+                return true;
+            } else if (id == R.id.nav_activity) {
+                showFragment(new ActivityFragment());
                 return true;
             } else if (id == R.id.nav_mine) {
                 showFragment(new MineFragment());

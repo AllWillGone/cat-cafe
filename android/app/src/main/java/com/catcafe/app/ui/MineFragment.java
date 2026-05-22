@@ -55,10 +55,7 @@ public class MineFragment extends Fragment {
         MaterialButton registerButton = view.findViewById(R.id.mineRegisterButton);
         MaterialButton logoutButton = view.findViewById(R.id.mineLogoutButton);
         MaterialButton profileButton = view.findViewById(R.id.mineProfileButton);
-        MaterialButton ordersButton = view.findViewById(R.id.mineOrdersButton);
         MaterialButton passwordButton = view.findViewById(R.id.minePasswordButton);
-        MaterialButton likesButton = view.findViewById(R.id.mineLikesButton);
-        MaterialButton commentsButton = view.findViewById(R.id.mineCommentsButton);
         MaterialButton deleteAccountButton = view.findViewById(R.id.mineDeleteAccountButton);
 
         loginButton.setOnClickListener(v ->
@@ -70,10 +67,7 @@ public class MineFragment extends Fragment {
             renderState();
         });
         profileButton.setOnClickListener(v -> startActivity(ProfileActivity.intent(requireContext())));
-        ordersButton.setOnClickListener(v -> startActivity(OrderListActivity.intent(requireContext())));
         passwordButton.setOnClickListener(v -> startActivity(PasswordActivity.intent(requireContext())));
-        likesButton.setOnClickListener(v -> startActivity(LikesActivity.intent(requireContext())));
-        commentsButton.setOnClickListener(v -> startActivity(MyCommentsActivity.intent(requireContext())));
         deleteAccountButton.setOnClickListener(v -> confirmDeleteAccount());
 
         renderState();
@@ -98,7 +92,6 @@ public class MineFragment extends Fragment {
         userTypeText.setText(sessionManager.isAdmin() ? "管理员账号" : "普通用户账号");
         userIdText.setText(String.valueOf(sessionManager.getUserId()));
         userPhoneText.setText(emptyToDefault(sessionManager.getUserPhone(), "未设置"));
-        applyAdminMode(sessionManager.isAdmin());
         loadAvatar(sessionManager.getUserAvatar());
         refreshUserDetail();
     }
@@ -115,7 +108,6 @@ public class MineFragment extends Fragment {
                 userTypeText.setText(data.userType == 1 ? "管理员账号" : "普通用户账号");
                 userIdText.setText(String.valueOf(data.userId));
                 userPhoneText.setText(emptyToDefault(data.userPhone, "未设置"));
-                applyAdminMode(data.userType == 1);
                 loadAvatar(data.userAvatar);
             }
 
@@ -172,22 +164,5 @@ public class MineFragment extends Fragment {
 
     private String emptyToDefault(String value, String fallback) {
         return value == null || value.trim().isEmpty() ? fallback : value;
-    }
-
-    private void applyAdminMode(boolean admin) {
-        setVisible(R.id.mineOrdersButton, !admin);
-        setVisible(R.id.mineLikesButton, !admin);
-        setVisible(R.id.mineCommentsButton, !admin);
-    }
-
-    private void setVisible(int id, boolean visible) {
-        View root = getView();
-        if (root == null) {
-            return;
-        }
-        View view = root.findViewById(id);
-        if (view != null) {
-            view.setVisibility(visible ? View.VISIBLE : View.GONE);
-        }
     }
 }

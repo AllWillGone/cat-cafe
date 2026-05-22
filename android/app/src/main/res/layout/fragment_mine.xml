@@ -204,30 +204,6 @@
                     android:layout_height="48dp"
                     android:text="修改信息" />
 
-                <LinearLayout
-                    android:layout_width="match_parent"
-                    android:layout_height="wrap_content"
-                    android:layout_marginTop="8dp"
-                    android:orientation="horizontal">
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/mineOrdersButton"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="0dp"
-                        android:layout_height="48dp"
-                        android:layout_weight="1"
-                        android:text="我的订单" />
-
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/mineLikesButton"
-                        style="?attr/materialButtonOutlinedStyle"
-                        android:layout_width="0dp"
-                        android:layout_height="48dp"
-                        android:layout_marginStart="8dp"
-                        android:layout_weight="1"
-                        android:text="我的点赞" />
-                </LinearLayout>
-
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/minePasswordButton"
                     style="?attr/materialButtonOutlinedStyle"
@@ -235,14 +211,6 @@
                     android:layout_height="48dp"
                     android:layout_marginTop="8dp"
                     android:text="修改密码" />
-
-                <com.google.android.material.button.MaterialButton
-                    android:id="@+id/mineCommentsButton"
-                    style="?attr/materialButtonOutlinedStyle"
-                    android:layout_width="match_parent"
-                    android:layout_height="48dp"
-                    android:layout_marginTop="8dp"
-                    android:text="我的评论" />
 
                 <com.google.android.material.button.MaterialButton
                     android:id="@+id/mineLogoutButton"
