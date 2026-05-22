@@ -99,7 +99,7 @@ const handleLogout = () => {
 
 <style scoped>
 .user-layout { min-height: 100vh; background: #f5f5f5; }
-.user-header { display: flex; align-items: center; background: #fff; border-bottom: 1px solid #e6e6e6; padding: 0 20px; height: 60px; }
+.user-header { display: flex; align-items: center; background: #fff; border-bottom: 1px solid #e6e6e6; padding: env(safe-area-inset-top, 0px) 20px 0; min-height: 60px; }
 .logo { font-size: 18px; font-weight: bold; color: #409EFF; margin-right: 30px; white-space: nowrap; }
 .nav-menu { flex: 1; border-bottom: none !important; }
 .nav-menu .el-menu-item { height: 60px; line-height: 60px; }

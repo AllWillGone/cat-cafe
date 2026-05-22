@@ -33,6 +33,12 @@ services:
       - ./uploads:/app/uploads
     restart: unless-stopped
 
+  adminer:
+    image: adminer:latest
+    depends_on:
+      - mysql
+    restart: unless-stopped
+
   nginx:
     build:
       context: .
@@ -41,6 +47,7 @@ services:
       - "80:80"
     depends_on:
       - backend
+      - adminer
     volumes:
       - ./uploads/cats:/usr/share/nginx/html/cats
       - ./uploads/products:/usr/share/nginx/html/products

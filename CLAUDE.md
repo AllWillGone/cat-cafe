@@ -109,6 +109,12 @@ docker compose -f docker-compose.prod.yml down               # 停止所有服�
 | `admin` | `admin123` | 管理员 |
 | `test` | `123456` | 顾客 |
 
+**Adminer（数据库管理，老师用）：**
+
+| URL | 用户名 | 密码 | 系统 | 服务器 | 数据库 | 权限 |
+|-----|--------|------|------|--------|--------|------|
+| `http://47.86.228.41/adminer` | `teacher` | `catcafe2026` | MySQL | `mysql` | `cat_cafe` | SELECT 只读 |
+
 **⚠️ 注意：**
 - 2核2G 内存有限，切勿同时构建所有镜像。必须分步：先构建后端，再构建前端（`docker run --rm -v ... node:22-alpine sh -c "npm run build"`）
 - 加了 2GB swap 防止 OOM，但 npm build 仍建议单独在临时容器中运行
@@ -171,19 +177,20 @@ docs/            开发日志、需求分析
 - 建表用 init.sql 手动执行，不用 SQLAlchemy create_all
 - 数据库字段 camelCase，接口路径 kebab-case
 - 后端直接托管 `web/cat-cafe-ui/public` 下的 `/cats`、`/products`、`/avatars` 静态资源
-- 管理员可通过 `POST /api/admin/upload` 上传图片（Web 端有文件选择器，无需手动输路径）
+- 管理员可通过 `POST /api/upload` 上传图片（Web 端有文件选择器，无需手动输路径）
 - Docker 生产环境：backend 和 nginx 通过 `./uploads/` 共享目录传递上传文件
 
-### 接口总览（39 个 /api 接口，全部完成）
+### 接口总览（41 个 /api 接口，全部完成）
 
 | 模块 | 数量 | 文件 |
 | --- | --- | --- |
 | 用户 | 12 | routers/user.py |
 | 猫咪 | 6 | routers/cat.py |
 | 商品 | 7 | routers/product.py |
-| 评论 | 5 | routers/comment.py |
+| 评论 | 6 | routers/comment.py |
 | 点赞 | 3 | routers/likes.py |
 | 订单 | 6 | routers/order.py |
+| 上传 | 1 | routers/upload.py |
 
 完整接口清单和测试状态见 backend/CLAUDE.md。
 
