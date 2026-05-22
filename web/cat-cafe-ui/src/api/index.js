@@ -1,8 +1,8 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: 'http://127.0.0.1:8000', // 你的 FastAPI 地址
-  timeout: 5000,
+  baseURL: '', // 生产用相对路径，开发走 vite proxy
+  timeout: 15000,
 })
 
 // 请求拦截器（以后加 token 用）

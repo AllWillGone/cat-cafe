@@ -19,7 +19,7 @@
             android:id="@+id/productImage"
             android:layout_width="72dp"
             android:layout_height="72dp"
-            android:scaleType="centerCrop"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_image_placeholder" />
 
         <LinearLayout

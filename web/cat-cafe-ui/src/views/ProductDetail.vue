@@ -230,8 +230,8 @@ onMounted(() => { fetchProduct(); fetchComments() })
 .page { max-width: 860px; margin: 0 auto; }
 .detail-layout { display: flex; gap: 32px; flex-wrap: wrap; }
 .photo-section { flex-shrink: 0; }
-.detail-photo { width: 300px; height: 240px; object-fit: cover; border-radius: 8px; cursor: pointer; display: block; }
-.photo-fallback { width: 300px; height: 240px; border-radius: 8px; background: #f5f5f5; align-items: center; justify-content: center; }
+.detail-photo { width: 100%; max-width: 300px; height: auto; aspect-ratio: 5 / 4; object-fit: cover; border-radius: 8px; cursor: pointer; display: block; }
+.photo-fallback { width: 100%; max-width: 300px; aspect-ratio: 5 / 4; border-radius: 8px; background: #f5f5f5; display: flex; align-items: center; justify-content: center; }
 .info-section { flex: 1; min-width: 260px; }
 .info-section h2 { margin: 0 0 20px 0; font-size: 24px; }
 .info-row { display: flex; align-items: center; margin-bottom: 12px; }

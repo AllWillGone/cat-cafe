@@ -10,6 +10,7 @@ from routers.product import router as product_router
 from routers.comment import router as comment_router
 from routers.likes import router as likes_router
 from routers.order import router as order_router
+from routers.upload import router as upload_router, user_upload_router
 
 app = FastAPI(title="Cat Cafe Backend")
 
@@ -33,6 +34,8 @@ app.include_router(product_router)
 app.include_router(comment_router)
 app.include_router(likes_router)
 app.include_router(order_router)
+app.include_router(upload_router)
+app.include_router(user_upload_router)
 
 
 @app.get("/health")

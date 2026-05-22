@@ -22,14 +22,15 @@ uvicorn main:app --reload
   - user.py — 用户模块（12 接口）
   - cat.py — 猫咪模块（6 接口）
   - product.py — 商品模块（7 接口）
-  - comment.py — 评论模块（5 接口）
+  - comment.py — 评论模块（6 接口）
   - likes.py — 点赞模块（3 接口）
   - order.py — 订单模块（6 接口）
+  - upload.py — 上传模块（1 接口）
 - .env — 数据库密码 + JWT 密钥（Git 不上传）
 - .env.example — 本地 .env 模板，不含真实密码
 - .venv/ — 虚拟环境（Git 不上传）
 
-## 当前接口总览（39 个 /api 接口，不含 /health）
+## 当前接口总览（41 个 /api 接口，不含 /health）
 
 Web 整合后接口已扩展；最新数量以代码、`/docs` 和 `docs/开发日志2.md` 附件为准。
 
@@ -70,11 +71,12 @@ Web 整合后接口已扩展；最新数量以代码、`/docs` 和 `docs/开发�
 | DELETE | /api/admin/products/{id} | ✅ |
 | PUT | /api/admin/products/{id}/off | ✅ |
 
-### 评论模块（5/5 ✅）
+### 评论模块（6/6 ✅）
 | 方法 | 路径 | 状态 |
 |------|------|------|
 | POST | /api/comments | ✅ |
 | GET | /api/comments | ✅ |
+| GET | /api/comments/my | ✅ |
 | GET | /api/admin/comments | ✅ |
 | PUT | /api/admin/comments/{id}/audit | ✅ |
 | DELETE | /api/comments/{id} | ✅ |
@@ -95,6 +97,11 @@ Web 整合后接口已扩展；最新数量以代码、`/docs` 和 `docs/开发�
 | GET | /api/orders/{id} | ✅ |
 | PUT | /api/orders/{id} | ✅ |
 | DELETE | /api/orders/{id} | ✅ |
+
+### 上传模块（1/1 ✅）
+| 方法 | 路径 | 状态 |
+|------|------|------|
+| POST | /api/upload | ✅ |
 
 ## 接口编写规范
 每个接口：在 schemas.py 定义请求/响应 → 在 routers/ 写路由（db: Session = Depends(get_db)）→ /docs 测试

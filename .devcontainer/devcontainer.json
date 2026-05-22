@@ -1,0 +1,26 @@
+{
+  "name": "Cat Cafe Dev",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "ms-python.python",
+        "ms-python.debugpy",
+        "Vue.volar",
+        "cweijan.vscode-mysql-client2",
+        "EditorConfig.EditorConfig"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/local/bin/python",
+        "[python]": {
+          "editor.formatOnSave": true,
+          "editor.defaultFormatter": "ms-python.python"
+        }
+      }
+    }
+  },
+  "postCreateCommand": "bash .devcontainer/postCreate.sh",
+  "forwardPorts": [8000, 5173, 3306]
+}

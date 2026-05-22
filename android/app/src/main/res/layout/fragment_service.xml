@@ -5,7 +5,10 @@
     android:layout_height="match_parent"
     android:background="@color/cat_surface"
     android:orientation="vertical"
-    android:padding="12dp">
+    android:paddingLeft="16dp"
+    android:paddingRight="16dp"
+    android:paddingTop="16dp"
+    android:paddingBottom="16dp">
 
     <com.google.android.material.button.MaterialButtonToggleGroup
         android:id="@+id/serviceTabs"

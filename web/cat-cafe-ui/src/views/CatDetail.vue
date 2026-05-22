@@ -231,8 +231,10 @@ onMounted(() => { fetchCat(); fetchComments() })
 .detail-layout { display: flex; gap: 32px; flex-wrap: wrap; }
 .photo-section { flex-shrink: 0; }
 .detail-photo {
-  width: 360px;
-  height: 280px;
+  width: 100%;
+  max-width: 360px;
+  height: auto;
+  aspect-ratio: 4 / 3;
   object-fit: cover;
   border-radius: 8px;
   cursor: pointer;

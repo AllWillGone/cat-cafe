@@ -1,15 +1,66 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<com.google.android.material.card.MaterialCardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:orientation="vertical"
-    android:padding="12dp">
+    android:layout_marginStart="8dp"
+    android:layout_marginTop="4dp"
+    android:layout_marginEnd="8dp"
+    android:layout_marginBottom="4dp"
+    app:cardBackgroundColor="@color/white"
+    app:cardCornerRadius="12dp"
+    app:cardElevation="1dp"
+    app:strokeColor="@color/cat_border"
+    app:strokeWidth="0.5dp">
 
-    <TextView android:id="@+id/likeTitle" android:layout_width="match_parent" android:layout_height="wrap_content" android:textStyle="bold" />
-    <TextView android:id="@+id/likeMeta" android:layout_width="match_parent" android:layout_height="wrap_content" />
-    <com.google.android.material.button.MaterialButton
-        android:id="@+id/likeCancelButton"
-        android:layout_width="wrap_content"
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="取消点赞" />
-</LinearLayout>
+        android:gravity="center_vertical"
+        android:orientation="horizontal"
+        android:padding="14dp">
+
+        <ImageView
+            android:id="@+id/likeIcon"
+            android:layout_width="40dp"
+            android:layout_height="40dp"
+            android:background="@drawable/bg_card_icon_circle"
+            android:padding="9dp"
+            android:src="@drawable/ic_likes_24" />
+
+        <LinearLayout
+            android:layout_width="0dp"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="12dp"
+            android:layout_weight="1"
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/likeTitle"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textColor="@color/cat_text"
+                android:textSize="15sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/likeMeta"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="3dp"
+                android:textColor="@color/cat_muted"
+                android:textSize="13sp" />
+        </LinearLayout>
+
+        <com.google.android.material.button.MaterialButton
+            android:id="@+id/likeCancelButton"
+            style="?attr/materialButtonOutlinedStyle"
+            android:layout_width="wrap_content"
+            android:layout_height="36dp"
+            android:text="取消"
+            android:textColor="@color/like_red"
+            android:textSize="12sp"
+            app:cornerRadius="8dp"
+            app:strokeColor="@color/like_red" />
+    </LinearLayout>
+</com.google.android.material.card.MaterialCardView>

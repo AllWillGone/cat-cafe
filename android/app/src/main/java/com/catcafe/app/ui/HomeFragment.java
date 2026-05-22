@@ -7,6 +7,9 @@ import android.view.ViewGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+import com.google.android.material.imageview.ShapeableImageView;
+
 import androidx.annotation.NonNull;
 import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
@@ -22,6 +25,7 @@ import com.catcafe.app.model.CatDetail;
 import com.catcafe.app.model.PaginatedCats;
 import com.catcafe.app.model.PaginatedProducts;
 import com.catcafe.app.model.ProductDetail;
+import com.catcafe.app.model.UserDetail;
 import com.catcafe.app.network.ApiCallback;
 import com.catcafe.app.network.ApiClient;
 import com.catcafe.app.network.NetworkHelper;
@@ -38,6 +42,8 @@ public class HomeFragment extends Fragment {
     private SessionManager sessionManager;
     private android.content.Context appContext;
     private TextView welcomeText;
+    private TextView homeSubtitle;
+    private ShapeableImageView homeAvatarImage;
     private TextView cartBadge;
     private MaterialButton loginButton;
     private MaterialButton cartButton;
@@ -57,6 +63,8 @@ public class HomeFragment extends Fragment {
         appContext = requireContext().getApplicationContext();
         sessionManager = new SessionManager(requireContext());
         welcomeText = view.findViewById(R.id.welcomeText);
+        homeSubtitle = view.findViewById(R.id.homeSubtitle);
+        homeAvatarImage = view.findViewById(R.id.homeAvatarImage);
         cartBadge = view.findViewById(R.id.homeCartBadge);
         loginButton = view.findViewById(R.id.homeLoginButton);
         cartButton = view.findViewById(R.id.homeCartButton);
@@ -148,9 +156,46 @@ public class HomeFragment extends Fragment {
     private void refreshWelcome() {
         if (sessionManager.isLoggedIn()) {
             welcomeText.setText("欢迎回来，" + sessionManager.getUserName());
+            homeSubtitle.setText(sessionManager.isAdmin() ? "管理员账号" : "今日推荐、在岗猫咪和购物车都在这里");
+            homeAvatarImage.setVisibility(View.VISIBLE);
+            loadAvatar(sessionManager.getUserAvatar());
+            refreshUserInfo();
         } else {
             welcomeText.setText("欢迎来到猫咖");
+            homeSubtitle.setText("今日推荐、在岗猫咪和购物车都在这里");
+            homeAvatarImage.setVisibility(View.GONE);
         }
+    }
+
+    private void loadAvatar(String path) {
+        Glide.with(this)
+                .load(AppConfig.buildImageUrl(path))
+                .placeholder(R.drawable.ic_image_placeholder)
+                .error(R.drawable.ic_image_placeholder)
+                .circleCrop()
+                .into(homeAvatarImage);
+    }
+
+    private void refreshUserInfo() {
+        if (!sessionManager.isLoggedIn()) {
+            return;
+        }
+        NetworkHelper.enqueue(requireContext(), ApiClient.getService(appContext).getMe(), new ApiCallback<UserDetail>() {
+            @Override
+            public void onSuccess(UserDetail data) {
+                if (!isAdded()) {
+                    return;
+                }
+                sessionManager.saveUserDetail(data);
+                homeSubtitle.setText(data.userType == 1 ? "管理员账号" : "今日推荐、在岗猫咪和购物车都在这里");
+                loadAvatar(data.userAvatar);
+            }
+
+            @Override
+            public void onError(String message) {
+                // 静默失败，不影响首页使用
+            }
+        });
     }
 
     private void renderHomeActions() {

@@ -8,3 +8,5 @@ pydantic==2.10.5
 passlib[bcrypt]==1.7.4
 bcrypt==4.0.1
 python-jose[cryptography]==3.3.0
+python-multipart==0.0.18
+gunicorn==23.0.0

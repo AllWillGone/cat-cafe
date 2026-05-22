@@ -105,7 +105,7 @@ onMounted(async () => {
 .cat-gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 16px; }
 
 .cat-card { overflow: hidden; }
-.cat-photo { width: 100%; height: 180px; object-fit: cover; display: block; cursor: pointer; }
+.cat-photo { width: 100%; aspect-ratio: 4 / 3; object-fit: cover; display: block; cursor: pointer; }
 .cat-info { padding: 12px 4px 4px; }
 .cat-info h4 { margin: 0 0 4px 0; font-size: 16px; color: #333; }
 .cat-breed { margin: 0 0 6px 0; font-size: 13px; color: #666; }

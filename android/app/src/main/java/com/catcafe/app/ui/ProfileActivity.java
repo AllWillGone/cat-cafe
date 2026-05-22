@@ -3,12 +3,17 @@ package com.catcafe.app.ui;
 import android.app.DatePickerDialog;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.widget.ImageView;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.RadioGroup;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 
 import com.bumptech.glide.Glide;
 import com.catcafe.app.R;
@@ -23,8 +28,15 @@ import com.google.android.material.button.MaterialButton;
 import com.google.android.material.imageview.ShapeableImageView;
 import com.google.android.material.textfield.TextInputEditText;
 
+import java.io.ByteArrayOutputStream;
+import java.io.InputStream;
 import java.util.Calendar;
 import java.util.Locale;
+import java.util.Map;
+
+import okhttp3.MediaType;
+import okhttp3.MultipartBody;
+import okhttp3.RequestBody;
 
 public class ProfileActivity extends BaseToolbarActivity {
     public static Intent intent(Context context) {
@@ -62,6 +74,20 @@ public class ProfileActivity extends BaseToolbarActivity {
             public void afterTextChanged(Editable s) {
             }
         });
+
+        MaterialButton uploadButton = findViewById(R.id.profileUploadButton);
+        ImageView uploadPreview = findViewById(R.id.profileUploadPreview);
+
+        ActivityResultLauncher<String> pickMedia = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null) {
+                        uploadAvatarFile(uri, avatarInput, uploadPreview);
+                    }
+                }
+        );
+
+        uploadButton.setOnClickListener(v -> pickMedia.launch("image/*"));
 
         birthdayInput.setOnClickListener(v -> showBirthdayPicker(birthdayInput));
 
@@ -114,6 +140,55 @@ public class ProfileActivity extends BaseToolbarActivity {
                         }
                     });
         });
+    }
+
+    private void uploadAvatarFile(Uri uri, TextInputEditText avatarInput, ImageView preview) {
+        try {
+            InputStream inputStream = getContentResolver().openInputStream(uri);
+            if (inputStream == null) {
+                Toast.makeText(this, "无法读取图片", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+            byte[] chunk = new byte[4096];
+            int n;
+            while ((n = inputStream.read(chunk)) != -1) {
+                buffer.write(chunk, 0, n);
+            }
+            inputStream.close();
+            byte[] bytes = buffer.toByteArray();
+
+            RequestBody requestFile = RequestBody.create(MediaType.parse("image/*"), bytes);
+            MultipartBody.Part body = MultipartBody.Part.createFormData("file", "avatar.jpg", requestFile);
+            RequestBody typeBody = RequestBody.create(MediaType.parse("text/plain"), "avatar");
+
+            NetworkHelper.enqueue(this,
+                    ApiClient.getService(this).uploadAvatar(typeBody, body),
+                    new ApiCallback<Map<String, Object>>() {
+                        @Override
+                        public void onSuccess(Map<String, Object> data) {
+                            Object urlObj = data.get("url");
+                            String url = urlObj != null ? urlObj.toString() : "";
+                            avatarInput.setText(url);
+                            runOnUiThread(() -> {
+                                Glide.with(ProfileActivity.this)
+                                        .load(AppConfig.buildImageUrl(url))
+                                        .placeholder(R.drawable.ic_image_placeholder)
+                                        .error(R.drawable.ic_image_placeholder)
+                                        .into(preview);
+                                preview.setVisibility(android.view.View.VISIBLE);
+                            });
+                            Toast.makeText(ProfileActivity.this, "上传成功", Toast.LENGTH_SHORT).show();
+                        }
+
+                        @Override
+                        public void onError(String message) {
+                            Toast.makeText(ProfileActivity.this, "上传失败: " + message, Toast.LENGTH_SHORT).show();
+                        }
+                    });
+        } catch (Exception e) {
+            Toast.makeText(this, "读取图片失败: " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
     }
 
     private String textOf(TextInputEditText input) {
@@ -188,6 +263,7 @@ public class ProfileActivity extends BaseToolbarActivity {
                 .load(AppConfig.buildImageUrl(path))
                 .placeholder(R.drawable.ic_image_placeholder)
                 .error(R.drawable.ic_image_placeholder)
+                .circleCrop()
                 .into(avatar);
     }
 

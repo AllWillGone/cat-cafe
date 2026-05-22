@@ -20,6 +20,10 @@
           <el-icon><Goods /></el-icon>
           <span>商品</span>
         </el-menu-item>
+        <el-menu-item index="/home/cart">
+          <el-icon><ShoppingCart /></el-icon>
+          <span>购物车<el-badge v-if="cartCount > 0" :value="cartCount" class="cart-badge" /></span>
+        </el-menu-item>
         <el-menu-item index="/home/orders">
           <el-icon><List /></el-icon>
           <span>订单</span>
@@ -51,12 +55,14 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { HomeFilled, Avatar, Goods, List, Star, User } from '@element-plus/icons-vue'
+import { HomeFilled, Avatar, Goods, ShoppingCart, List, Star, User } from '@element-plus/icons-vue'
+import cartStore from '../stores/cartStore'
 
 const router = useRouter()
 const route = useRoute()
 const userName = computed(() => localStorage.getItem('userName') || '用户')
 const avatarUrl = ref(localStorage.getItem('userAvatar') || '')
+const cartCount = computed(() => cartStore.totalCount)
 
 onMounted(async () => {
   try {
@@ -74,6 +80,7 @@ const activeMenu = computed(() => {
   const path = route.path
   if (path.startsWith('/home/cats')) return '/home/cats'
   if (path.startsWith('/home/products')) return '/home/products'
+  if (path.startsWith('/home/cart')) return '/home/cart'
   if (path.startsWith('/home/orders')) return '/home/orders'
   if (path.startsWith('/home/likes')) return '/home/likes'
   if (path.startsWith('/home/profile')) return '/home/profile'
@@ -91,31 +98,13 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
-.user-layout {
-  min-height: 100vh;
-  background: #f5f5f5;
-  --el-color-primary: #E8983E;
-  --el-color-primary-light-3: #f0bc7e;
-  --el-color-primary-light-5: #f5d2a9;
-  --el-color-primary-light-7: #fae8d4;
-  --el-color-primary-light-9: #fef7f0;
-  --el-color-primary-dark-2: #c97c2e;
-}
-.user-header { display: flex; align-items: center; background: #fff; border-bottom: 1px solid #e6e6e6; padding: 0 20px; height: 60px; }
-.logo { font-size: 18px; font-weight: bold; color: #E8983E; margin-right: 30px; white-space: nowrap; }
+.user-layout { min-height: 100vh; background: #f5f5f5; }
+.user-header { display: flex; align-items: center; background: #fff; border-bottom: 1px solid #e6e6e6; padding: env(safe-area-inset-top, 0px) 20px 0; min-height: 60px; }
+.logo { font-size: 18px; font-weight: bold; color: #409EFF; margin-right: 30px; white-space: nowrap; }
 .nav-menu { flex: 1; border-bottom: none !important; }
 .nav-menu .el-menu-item { height: 60px; line-height: 60px; }
 .header-right { display: flex; align-items: center; gap: 8px; margin-left: 20px; }
 .profile-trigger { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .user-name { font-size: 14px; color: #333; }
-</style>
-<style>
-.user-layout {
-  --el-color-primary: #E8983E;
-  --el-color-primary-light-3: #f0bc7e;
-  --el-color-primary-light-5: #f5d2a9;
-  --el-color-primary-light-7: #fae8d4;
-  --el-color-primary-light-9: #fef7f0;
-  --el-color-primary-dark-2: #c97c2e;
-}
+.cart-badge { margin-left: 4px; }
 </style>

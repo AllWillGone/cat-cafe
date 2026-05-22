@@ -13,9 +13,18 @@
             <el-avatar :size="80" v-else>
               <span style="font-size:30px">🐱</span>
             </el-avatar>
-            <div style="margin-top:8px">
-              <el-input v-model="form.userAvatar" placeholder="输入头像URL" maxlength="255" style="width:260px" />
+            <div style="margin-top:8px; display: flex; gap: 8px; align-items: center; width: 100%">
+              <el-input v-model="form.userAvatar" placeholder="上传或手动输入路径" maxlength="255" style="flex:1" />
+              <el-upload
+                :show-file-list="false"
+                :before-upload="beforeUpload"
+                :http-request="doUpload"
+                accept="image/*"
+              >
+                <el-button :loading="uploadingPhoto">选择文件</el-button>
+              </el-upload>
             </div>
+            <img v-if="form.userAvatar" :src="form.userAvatar" class="upload-preview" />
           </div>
         </el-form-item>
         <el-form-item label="用户ID">
@@ -24,8 +33,8 @@
         <el-form-item label="用户名">
           <el-input v-model="form.userName" maxlength="50" />
         </el-form-item>
-        <el-form-item label="手机号" prop="userPhone" :error="phoneError">
-          <el-input v-model="form.userPhone" maxlength="11" placeholder="请输入11位手机号" @input="phoneError=''" />
+        <el-form-item label="手机号">
+          <el-input v-model="form.userPhone" maxlength="20" />
         </el-form-item>
         <el-form-item label="性别">
           <el-radio-group v-model="form.gender">
@@ -35,18 +44,13 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="生日">
-          <el-date-picker v-model="form.birthday" type="date" value-format="YYYY-MM-DD" :disabled-date="disableFutureDate" />
+          <el-date-picker v-model="form.birthday" type="date" value-format="YYYY-MM-DD" />
         </el-form-item>
         <el-form-item label="注册时间">
           <el-input :model-value="profile.registerTime" disabled />
         </el-form-item>
         <el-form-item>
           <el-button type="primary" :loading="saving" @click="saveProfile">保存修改</el-button>
-        </el-form-item>
-        <el-divider />
-        <el-form-item>
-          <el-button type="danger" :loading="deleting" @click="deleteAccount">注销账号</el-button>
-          <span style="color:#999;font-size:12px;margin-left:12px">注销后数据无法恢复</span>
         </el-form-item>
       </el-form>
     </el-card>
@@ -76,10 +80,42 @@
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
 import api from '../api/index'
-import { ElMessage, ElMessageBox } from 'element-plus'
-import { useRouter } from 'vue-router'
+import { ElMessage } from 'element-plus'
 
-const router = useRouter()
+const uploadingPhoto = ref(false)
+
+const beforeUpload = (file) => {
+  const isImage = file.type.startsWith('image/')
+  if (!isImage) {
+    ElMessage.error('只能上传图片文件')
+    return false
+  }
+  const isLt5M = file.size / 1024 / 1024 < 5
+  if (!isLt5M) {
+    ElMessage.error('图片大小不能超过 5MB')
+    return false
+  }
+  return true
+}
+
+const doUpload = async (options) => {
+  uploadingPhoto.value = true
+  try {
+    const fd = new FormData()
+    fd.append('file', options.file)
+    fd.append('type', 'avatar')
+    const res = await api.post('/api/upload', fd, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    form.userAvatar = res.data.url
+    ElMessage.success('上传成功')
+  } catch (err) {
+    ElMessage.error(err.response?.data?.detail || '上传失败')
+  } finally {
+    uploadingPhoto.value = false
+  }
+}
+
 const profile = ref({})
 const loading = ref(false)
 const saving = ref(false)
@@ -108,14 +144,7 @@ const fetchProfile = async () => {
   }
 }
 
-const phoneError = ref('')
-const phonePattern = /^1[3-9]\d{9}$/
-
 const saveProfile = async () => {
-  if (form.userPhone && !phonePattern.test(form.userPhone)) {
-    phoneError.value = '请输入正确的11位手机号'
-    return
-  }
   saving.value = true
   try {
     const body = {
@@ -134,32 +163,6 @@ const saveProfile = async () => {
     ElMessage.error(err.response?.data?.detail || '更新失败')
   } finally {
     saving.value = false
-  }
-}
-
-const disableFutureDate = (time) => time.getTime() > Date.now()
-
-const deleting = ref(false)
-const deleteAccount = async () => {
-  try {
-    await ElMessageBox.confirm(
-      '注销后账号将被永久删除，数据无法恢复。确定要继续吗？',
-      '确认注销',
-      { confirmButtonText: '确认注销', cancelButtonText: '返回', confirmButtonClass: 'el-button--danger', type: 'warning' }
-    )
-  } catch {
-    return
-  }
-  deleting.value = true
-  try {
-    await api.delete('/api/user/me')
-    ElMessage.success('账号已注销')
-    localStorage.clear()
-    router.push('/login')
-  } catch (err) {
-    ElMessage.error(err.response?.data?.detail || '注销失败，可能存在未完成的订单')
-  } finally {
-    deleting.value = false
   }
 }
 
@@ -227,4 +230,11 @@ onMounted(() => fetchProfile())
 <style scoped>
 .page { max-width: 600px; margin: 0 auto; }
 .avatar-section { display: flex; flex-direction: column; align-items: center; }
+.upload-preview {
+  max-width: 200px;
+  max-height: 120px;
+  margin-top: 8px;
+  border-radius: 4px;
+  display: block;
+}
 </style>
