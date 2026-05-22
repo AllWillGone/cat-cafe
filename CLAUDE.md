@@ -69,7 +69,7 @@ MySQL 数据库和数据表在容器首次启动时自动创建（init.sql 和 s
 
 ### 生产服务器
 
-> Docker 配置文件在 `docker-deploy` 分支（尚未合并 main），包括 `docker-compose.prod.yml`、`backend/Dockerfile.prod`、`nginx/`。
+Docker 配置文件已在当前分支，包括 `docker-compose.prod.yml`（生产）、`docker-compose.yml`（本地开发）、`backend/Dockerfile.prod`、`nginx/`。
 
 阿里云 ECS Ubuntu 24.04，2核2G，IP: `47.86.228.41`，域名: `pixelcat.tech`。
 
@@ -191,7 +191,7 @@ docs/            开发日志、需求分析
 
 - Android 只做顾客端，不做管理员端（管理员功能由 Web 承担）
 - 猫咪本体只用于信息展示/评论/点赞，不作为购买对象；可购买的是服务券、餐饮、猫咪用品
-- 不做真实支付、文件上传、离线缓存
+- 不做真实支付、离线缓存
 - 金额用字符串或 BigDecimal，不用 float/double
 - 认证以服务端 token 为准，客户端不伪造 userId 或 userType
 - 不随意改数据库结构，不新增未被需求要求的后端接口

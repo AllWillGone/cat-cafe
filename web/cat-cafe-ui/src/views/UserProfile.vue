@@ -104,7 +104,7 @@ const doUpload = async (options) => {
     const fd = new FormData()
     fd.append('file', options.file)
     fd.append('type', 'avatar')
-    const res = await api.post('/api/admin/upload', fd, {
+    const res = await api.post('/api/upload', fd, {
       headers: { 'Content-Type': 'multipart/form-data' },
     })
     form.userAvatar = res.data.url
