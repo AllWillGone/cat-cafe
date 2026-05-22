@@ -17,17 +17,13 @@
         android:fillColor="#FFFFFF"
         android:pathData="M28,54 Q28,80 54,80 Q80,80 80,54 Z" />
     <!-- 眼睛 左 -->
-    <circle
+    <path
         android:fillColor="#2F241C"
-        android:cx="42"
-        android:cy="58"
-        android:r="4" />
+        android:pathData="M38,58 A4,4 0 1,1 46,58 A4,4 0 1,1 38,58 Z" />
     <!-- 眼睛 右 -->
-    <circle
+    <path
         android:fillColor="#2F241C"
-        android:cx="66"
-        android:cy="58"
-        android:r="4" />
+        android:pathData="M62,58 A4,4 0 1,1 70,58 A4,4 0 1,1 62,58 Z" />
     <!-- 鼻子 -->
     <path
         android:fillColor="#E95F58"
