@@ -110,7 +110,7 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/homeCatList"
             android:layout_width="match_parent"
-            android:layout_height="210dp"
+            android:layout_height="220dp"
             android:layout_marginTop="8dp" />
 
         <TextView
@@ -125,7 +125,7 @@
         <androidx.recyclerview.widget.RecyclerView
             android:id="@+id/homeProductList"
             android:layout_width="match_parent"
-            android:layout_height="380dp"
+            android:layout_height="480dp"
             android:layout_marginTop="8dp"
             android:nestedScrollingEnabled="false" />
     </LinearLayout>

@@ -19,8 +19,8 @@
         <ImageView
             android:id="@+id/catImage"
             android:layout_width="match_parent"
-            android:layout_height="118dp"
-            android:scaleType="centerCrop"
+            android:layout_height="100dp"
+            android:scaleType="fitCenter"
             android:src="@drawable/ic_image_placeholder" />
 
         <TextView
@@ -29,7 +29,7 @@
             android:layout_height="wrap_content"
             android:layout_marginTop="8dp"
             android:textColor="@color/cat_text"
-            android:textSize="16sp"
+            android:textSize="15sp"
             android:textStyle="bold" />
 
         <TextView
@@ -70,11 +70,12 @@
 
             <ImageButton
                 android:id="@+id/catLikeButton"
-                android:layout_width="36dp"
-                android:layout_height="36dp"
+                android:layout_width="32dp"
+                android:layout_height="32dp"
                 android:layout_marginStart="2dp"
                 android:background="?attr/selectableItemBackgroundBorderless"
-                android:padding="7dp"
+                android:contentDescription="@string/like_button"
+                android:padding="4dp"
                 android:src="@drawable/ic_heart_outline_24" />
         </LinearLayout>
     </LinearLayout>
