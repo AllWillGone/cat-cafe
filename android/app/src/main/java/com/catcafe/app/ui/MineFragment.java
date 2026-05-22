@@ -159,6 +159,7 @@ public class MineFragment extends Fragment {
                 .load(AppConfig.buildImageUrl(path))
                 .placeholder(R.drawable.ic_image_placeholder)
                 .error(R.drawable.ic_image_placeholder)
+                .circleCrop()
                 .into(avatarImage);
     }
 

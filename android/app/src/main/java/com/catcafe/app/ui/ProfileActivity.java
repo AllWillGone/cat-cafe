@@ -263,6 +263,7 @@ public class ProfileActivity extends BaseToolbarActivity {
                 .load(AppConfig.buildImageUrl(path))
                 .placeholder(R.drawable.ic_image_placeholder)
                 .error(R.drawable.ic_image_placeholder)
+                .circleCrop()
                 .into(avatar);
     }
 

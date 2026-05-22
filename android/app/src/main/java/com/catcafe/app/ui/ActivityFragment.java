@@ -13,6 +13,7 @@ import androidx.fragment.app.Fragment;
 import com.catcafe.app.R;
 import com.catcafe.app.core.SessionManager;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
 
 public class ActivityFragment extends Fragment {
     private SessionManager sessionManager;
@@ -31,17 +32,17 @@ public class ActivityFragment extends Fragment {
 
         MaterialButton loginButton = view.findViewById(R.id.activityLoginButton);
         MaterialButton registerButton = view.findViewById(R.id.activityRegisterButton);
-        MaterialButton ordersButton = view.findViewById(R.id.activityOrdersButton);
-        MaterialButton likesButton = view.findViewById(R.id.activityLikesButton);
-        MaterialButton commentsButton = view.findViewById(R.id.activityCommentsButton);
+        MaterialCardView ordersCard = view.findViewById(R.id.activityOrdersCard);
+        MaterialCardView likesCard = view.findViewById(R.id.activityLikesCard);
+        MaterialCardView commentsCard = view.findViewById(R.id.activityCommentsCard);
 
         loginButton.setOnClickListener(v ->
                 startActivity(new Intent(requireContext(), AuthActivity.class)));
         registerButton.setOnClickListener(v ->
                 startActivity(new Intent(requireContext(), AuthActivity.class).putExtra(AuthActivity.EXTRA_MODE, AuthActivity.MODE_REGISTER)));
-        ordersButton.setOnClickListener(v -> startActivity(OrderListActivity.intent(requireContext())));
-        likesButton.setOnClickListener(v -> startActivity(LikesActivity.intent(requireContext())));
-        commentsButton.setOnClickListener(v -> startActivity(MyCommentsActivity.intent(requireContext())));
+        ordersCard.setOnClickListener(v -> startActivity(OrderListActivity.intent(requireContext())));
+        likesCard.setOnClickListener(v -> startActivity(LikesActivity.intent(requireContext())));
+        commentsCard.setOnClickListener(v -> startActivity(MyCommentsActivity.intent(requireContext())));
 
         renderState();
         return view;
