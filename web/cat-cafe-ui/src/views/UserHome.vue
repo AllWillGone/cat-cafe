@@ -20,6 +20,10 @@
           <el-icon><Goods /></el-icon>
           <span>商品</span>
         </el-menu-item>
+        <el-menu-item index="/home/cart">
+          <el-icon><ShoppingCart /></el-icon>
+          <span>购物车<el-badge v-if="cartCount > 0" :value="cartCount" class="cart-badge" /></span>
+        </el-menu-item>
         <el-menu-item index="/home/orders">
           <el-icon><List /></el-icon>
           <span>订单</span>
@@ -51,12 +55,14 @@
 <script setup>
 import { computed, ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { HomeFilled, Avatar, Goods, List, Star, User } from '@element-plus/icons-vue'
+import { HomeFilled, Avatar, Goods, ShoppingCart, List, Star, User } from '@element-plus/icons-vue'
+import cartStore from '../stores/cartStore'
 
 const router = useRouter()
 const route = useRoute()
 const userName = computed(() => localStorage.getItem('userName') || '用户')
 const avatarUrl = ref(localStorage.getItem('userAvatar') || '')
+const cartCount = computed(() => cartStore.totalCount)
 
 onMounted(async () => {
   try {
@@ -74,6 +80,7 @@ const activeMenu = computed(() => {
   const path = route.path
   if (path.startsWith('/home/cats')) return '/home/cats'
   if (path.startsWith('/home/products')) return '/home/products'
+  if (path.startsWith('/home/cart')) return '/home/cart'
   if (path.startsWith('/home/orders')) return '/home/orders'
   if (path.startsWith('/home/likes')) return '/home/likes'
   if (path.startsWith('/home/profile')) return '/home/profile'
@@ -99,4 +106,5 @@ const handleLogout = () => {
 .header-right { display: flex; align-items: center; gap: 8px; margin-left: 20px; }
 .profile-trigger { display: flex; align-items: center; gap: 8px; cursor: pointer; }
 .user-name { font-size: 14px; color: #333; }
+.cart-badge { margin-left: 4px; }
 </style>

@@ -31,6 +31,7 @@ const routes = [
       { path: 'cats', component: UserCats },
       { path: 'products/:id', component: ProductDetail },
       { path: 'products', component: UserProducts },
+      { path: 'cart', component: () => import('../views/CartPage.vue') },
       { path: 'orders', component: UserOrders },
       { path: 'likes', component: UserLikes },
       { path: 'profile', component: UserProfile },

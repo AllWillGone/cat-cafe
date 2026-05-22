@@ -51,6 +51,7 @@
       <el-table-column label="操作" width="170" fixed="right">
         <template #default="{ row }">
           <div class="action-btns">
+            <el-button size="small" @click.stop="handleAddToCart(row)">加购</el-button>
             <el-button size="small" type="primary" @click.stop="openOrderDialog(row)">下单</el-button>
             <el-tooltip :content="row._liked ? '点击取消点赞' : ''" :disabled="!row._liked" placement="top">
               <el-button size="small" @click.stop="handleLike(row)" :class="{ 'is-liked': row._liked }">
@@ -109,11 +110,17 @@
 import { ref, onMounted } from 'vue'
 import api from '../api/index'
 import { ElMessage } from 'element-plus'
+import cartStore from '../stores/cartStore'
 
 const products = ref([])
 const loading = ref(false)
 const category = ref(null)
 const keyword = ref('')
+
+const handleAddToCart = (product) => {
+  cartStore.addItem(product, 1)
+  ElMessage.success(`已将 ${product.productName} 加入购物车`)
+}
 
 const fetchProducts = async () => {
   loading.value = true
