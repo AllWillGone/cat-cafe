@@ -196,7 +196,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:layout_marginTop="10dp"
-                        android:hint="头像路径">
+                        android:hint="头像路径（可填 URL 或上传）">
 
                         <com.google.android.material.textfield.TextInputEditText
                             android:id="@+id/profileAvatarInput"
@@ -204,6 +204,42 @@
                             android:layout_height="wrap_content"
                             android:singleLine="true" />
                     </com.google.android.material.textfield.TextInputLayout>
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_marginTop="8dp"
+                        android:gravity="center_vertical"
+                        android:orientation="horizontal">
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/profileUploadButton"
+                            style="?attr/materialButtonOutlinedStyle"
+                            android:layout_width="wrap_content"
+                            android:layout_height="40dp"
+                            android:text="选择图片上传"
+                            android:textSize="13sp"
+                            app:cornerRadius="10dp" />
+
+                        <TextView
+                            android:id="@+id/profileUploadHint"
+                            android:layout_width="0dp"
+                            android:layout_height="wrap_content"
+                            android:layout_marginStart="10dp"
+                            android:layout_weight="1"
+                            android:text="支持 jpg/png/gif，最大 5MB"
+                            android:textColor="@color/cat_muted"
+                            android:textSize="11sp" />
+                    </LinearLayout>
+
+                    <ImageView
+                        android:id="@+id/profileUploadPreview"
+                        android:layout_width="match_parent"
+                        android:layout_height="120dp"
+                        android:layout_marginTop="8dp"
+                        android:scaleType="fitCenter"
+                        android:visibility="gone"
+                        android:background="@drawable/bg_image_placeholder_shape" />
                 </LinearLayout>
             </com.google.android.material.card.MaterialCardView>
 
