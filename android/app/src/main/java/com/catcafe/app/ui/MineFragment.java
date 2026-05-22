@@ -70,6 +70,13 @@ public class MineFragment extends Fragment {
         passwordButton.setOnClickListener(v -> startActivity(PasswordActivity.intent(requireContext())));
         deleteAccountButton.setOnClickListener(v -> confirmDeleteAccount());
 
+        view.findViewById(R.id.mineOrdersEntry).setOnClickListener(v ->
+                startActivity(OrderListActivity.intent(requireContext())));
+        view.findViewById(R.id.mineLikesEntry).setOnClickListener(v ->
+                startActivity(LikesActivity.intent(requireContext())));
+        view.findViewById(R.id.mineCommentsEntry).setOnClickListener(v ->
+                startActivity(MyCommentsActivity.intent(requireContext())));
+
         renderState();
         return view;
     }
