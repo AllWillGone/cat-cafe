@@ -13,6 +13,7 @@ import androidx.annotation.Nullable;
 import androidx.fragment.app.Fragment;
 
 import com.bumptech.glide.Glide;
+import com.catcafe.app.MainActivity;
 import com.catcafe.app.R;
 import com.catcafe.app.core.AppConfig;
 import com.catcafe.app.core.SessionManager;
@@ -35,6 +36,7 @@ public class MineFragment extends Fragment {
     private TextView userTypeText;
     private TextView userIdText;
     private TextView userPhoneText;
+    private MaterialButton deleteAccountButton;
 
     @Nullable
     @Override
@@ -56,7 +58,7 @@ public class MineFragment extends Fragment {
         MaterialButton logoutButton = view.findViewById(R.id.mineLogoutButton);
         MaterialButton profileButton = view.findViewById(R.id.mineProfileButton);
         MaterialButton passwordButton = view.findViewById(R.id.minePasswordButton);
-        MaterialButton deleteAccountButton = view.findViewById(R.id.mineDeleteAccountButton);
+        deleteAccountButton = view.findViewById(R.id.mineDeleteAccountButton);
 
         loginButton.setOnClickListener(v ->
                 startActivity(new Intent(requireContext(), AuthActivity.class)));
@@ -65,6 +67,9 @@ public class MineFragment extends Fragment {
         logoutButton.setOnClickListener(v -> {
             sessionManager.clear();
             renderState();
+            if (requireActivity() instanceof MainActivity) {
+                ((MainActivity) requireActivity()).refreshNavigationForRole();
+            }
         });
         profileButton.setOnClickListener(v -> startActivity(ProfileActivity.intent(requireContext())));
         passwordButton.setOnClickListener(v -> startActivity(PasswordActivity.intent(requireContext())));
@@ -92,6 +97,7 @@ public class MineFragment extends Fragment {
         userTypeText.setText(sessionManager.isAdmin() ? "管理员账号" : "普通用户账号");
         userIdText.setText(String.valueOf(sessionManager.getUserId()));
         userPhoneText.setText(emptyToDefault(sessionManager.getUserPhone(), "未设置"));
+        deleteAccountButton.setVisibility(sessionManager.isAdmin() ? View.GONE : View.VISIBLE);
         loadAvatar(sessionManager.getUserAvatar());
         refreshUserDetail();
     }
@@ -108,6 +114,7 @@ public class MineFragment extends Fragment {
                 userTypeText.setText(data.userType == 1 ? "管理员账号" : "普通用户账号");
                 userIdText.setText(String.valueOf(data.userId));
                 userPhoneText.setText(emptyToDefault(data.userPhone, "未设置"));
+                deleteAccountButton.setVisibility(data.userType == 1 ? View.GONE : View.VISIBLE);
                 loadAvatar(data.userAvatar);
             }
 
@@ -122,6 +129,10 @@ public class MineFragment extends Fragment {
     }
 
     private void confirmDeleteAccount() {
+        if (sessionManager.isAdmin()) {
+            Toast.makeText(requireContext(), "管理员不能注销自己的账号", Toast.LENGTH_SHORT).show();
+            return;
+        }
         new MaterialAlertDialogBuilder(requireContext())
                 .setTitle("注销账号")
                 .setMessage("注销后当前账号将无法继续登录。若账号存在历史订单或其他关联数据，后端可能拒绝注销。")
