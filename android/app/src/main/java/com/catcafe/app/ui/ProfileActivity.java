@@ -46,6 +46,11 @@ public class ProfileActivity extends BaseToolbarActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        if (new SessionManager(this).isAdmin()) {
+            Toast.makeText(this, "管理员账号为共用账号，不能修改个人信息", Toast.LENGTH_SHORT).show();
+            finish();
+            return;
+        }
         setContentView(R.layout.activity_profile);
         setupToolbar(R.id.profileToolbar);
 

@@ -49,7 +49,6 @@ public class ServiceFragment extends Fragment {
     private RecyclerView ticketList;
     private RecyclerView recyclerView;
     private ProductAdapter productAdapter;
-    private ProductAdapter ticketAdapter;
     private CatAdapter catAdapter;
     private SessionManager sessionManager;
     private int currentTab = TAB_PRODUCTS;
@@ -76,14 +75,11 @@ public class ServiceFragment extends Fragment {
         MaterialButton cartButton = view.findViewById(R.id.serviceCartButton);
 
         productAdapter = createProductAdapter();
-        ticketAdapter = createProductAdapter();
         catAdapter = new CatAdapter(requireContext(), this::openCatDetail,
                 (cat, countView, button) -> new LikeController(requireActivity(), 2, cat.catId, cat.likeCount, countView, button).bind(),
                 true);
 
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
-        ticketList.setLayoutManager(new LinearLayoutManager(requireContext()));
-        ticketList.setAdapter(ticketAdapter);
 
         tabs.check(TAB_PRODUCTS);
         tabs.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
@@ -117,9 +113,6 @@ public class ServiceFragment extends Fragment {
         }
         if (productAdapter != null) {
             productAdapter.refreshQuantities();
-        }
-        if (ticketAdapter != null) {
-            ticketAdapter.refreshQuantities();
         }
         refreshCartBadge();
     }
@@ -166,9 +159,6 @@ public class ServiceFragment extends Fragment {
         if (productAdapter != null) {
             productAdapter.refreshQuantities();
         }
-        if (ticketAdapter != null) {
-            ticketAdapter.refreshQuantities();
-        }
     }
 
     private void refreshCartBadge() {
@@ -184,7 +174,6 @@ public class ServiceFragment extends Fragment {
         if (currentTab == TAB_CATS) {
             showCatCafeMode();
             recyclerView.setAdapter(catAdapter);
-            loadCatCafeTickets();
             loadCats();
         } else {
             showProductMode();
@@ -194,9 +183,9 @@ public class ServiceFragment extends Fragment {
     }
 
     private void showCatCafeMode() {
-        ticketSectionTitle.setVisibility(View.VISIBLE);
-        ticketList.setVisibility(View.VISIBLE);
-        catSectionTitle.setVisibility(View.VISIBLE);
+        ticketSectionTitle.setVisibility(View.GONE);
+        ticketList.setVisibility(View.GONE);
+        catSectionTitle.setVisibility(View.GONE);
         searchInput.setHint("搜索猫咪");
     }
 
@@ -240,28 +229,6 @@ public class ServiceFragment extends Fragment {
                             return;
                         }
                         refreshLayout.setRefreshing(false);
-                        Toast.makeText(appContext, message, Toast.LENGTH_SHORT).show();
-                    }
-                });
-    }
-
-    private void loadCatCafeTickets() {
-        NetworkHelper.enqueue(appContext,
-                ApiClient.getService(appContext).getProducts(0, null, 0, AppConfig.PAGE_LIMIT),
-                new ApiCallback<PaginatedProducts>() {
-                    @Override
-                    public void onSuccess(PaginatedProducts data) {
-                        if (!isAdded()) {
-                            return;
-                        }
-                        ticketAdapter.submitList(ProductRules.catCafeTickets(data.items));
-                    }
-
-                    @Override
-                    public void onError(String message) {
-                        if (!isAdded()) {
-                            return;
-                        }
                         Toast.makeText(appContext, message, Toast.LENGTH_SHORT).show();
                     }
                 });

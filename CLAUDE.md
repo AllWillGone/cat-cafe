@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 猫咖点单系统
 
-四人课设，Android 顾客端 + Vue Web 管理端 + Python FastAPI + MySQL 8.0。
+四人课设，Android 顾客端/轻量管理端 + Vue Web 管理端 + Python FastAPI + MySQL 8.0。
 
 ### 常用命令
 
@@ -16,7 +16,7 @@ cd backend
 uvicorn main:app --reload       # 启动，文档页 http://127.0.0.1:8000/docs
 ```
 
-**Android 顾客端：**
+**Android：**
 
 ```bash
 cd android
@@ -123,7 +123,7 @@ docker compose -f docker-compose.prod.yml down               # 停止所有服�
 ### 项目结构
 
 ```
-android/         Android Studio 顾客端（作者负责）
+android/         Android Studio 顾客端/轻量管理端（作者负责）
 backend/         Python FastAPI，详见 backend/CLAUDE.md
 web/cat-cafe-ui/ Vue 3 + Element Plus + Vite 管理端（组员 C）
 database/        init.sql（建表）+ seed_demo_media.sql（演示数据）
@@ -196,7 +196,7 @@ docs/            开发日志、需求分析
 
 ### 开发边界
 
-- Android 只做顾客端，不做管理员端（管理员功能由 Web 承担）
+- Android 已包含轻量管理端；复杂后台仍优先由 Web 管理端承担。
 - 猫咪本体只用于信息展示/评论/点赞，不作为购买对象；可购买的是服务券、餐饮、猫咪用品
 - 不做真实支付、离线缓存
 - 金额用字符串或 BigDecimal，不用 float/double
