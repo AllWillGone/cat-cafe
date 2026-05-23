@@ -30,15 +30,19 @@
       @row-click="(row) => $router.push(`/home/products/${row.productId}`)"
     >
       <el-table-column prop="productId" label="ID" width="60" />
-      <el-table-column label="图片" width="80">
+      <el-table-column label="图片" width="90">
         <template #default="{ row }">
-          <img
-            :src="row.imageUrl"
-            style="width:50px;height:50px;border-radius:6px;object-fit:cover;cursor:pointer"
-            @click.stop="previewProductImage(row.imageUrl)"
-            @error="(e) => { e.target.style.display='none'; e.target.nextElementSibling.style.display='inline'; }"
-          />
-          <span style="font-size:24px;display:none">📦</span>
+          <div style="position:relative;width:60px;height:60px;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:30px">📦</span>
+            <img
+              v-if="row.imageUrl && !imgError[row.productId]"
+              :key="row.productId"
+              :src="row.imageUrl"
+              style="position:absolute;top:0;left:0;width:60px;height:60px;border-radius:6px;object-fit:cover;cursor:pointer"
+              @click.stop="previewProductImage(row.imageUrl)"
+              @error="imgError[row.productId] = true"
+            />
+          </div>
         </template>
       </el-table-column>
       <el-table-column prop="productName" label="商品名" min-width="140" />
@@ -52,7 +56,7 @@
       </el-table-column>
       <el-table-column prop="stockQuantity" label="库存" width="70" />
       <el-table-column prop="description" label="描述" min-width="140" show-overflow-tooltip />
-      <el-table-column label="操作" width="170" fixed="right">
+      <el-table-column label="操作" width="200" fixed="right">
         <template #default="{ row }">
           <div class="action-btns">
             <el-button size="small" @click.stop="handleAddToCart(row)">加购</el-button>
@@ -111,10 +115,14 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, reactive } from 'vue'
 import api from '../api/index'
 import { ElMessage } from 'element-plus'
 import cartStore from '../stores/cartStore'
+
+const imgError = reactive({})
+
+let phoneFetched = false
 
 const products = ref([])
 const loading = ref(false)
@@ -191,7 +199,7 @@ const openOrderDialog = (row) => {
     maxStock: row.stockQuantity,
     paymentMethod: 0,
     userName: localStorage.getItem('userName') || '',
-    userPhone: '',
+    userPhone: localStorage.getItem('userPhone') || '',
     orderNote: '',
   }
   orderDialogVisible.value = true
@@ -236,7 +244,15 @@ const previewProductImage = (url) => {
   productPreviewVisible.value = true
 }
 
-onMounted(() => fetchProducts())
+onMounted(async () => {
+  fetchProducts()
+  if (!localStorage.getItem('userPhone')) {
+    try {
+      const res = await api.get('/api/user/me')
+      if (res.data.userPhone) localStorage.setItem('userPhone', res.data.userPhone)
+    } catch {}
+  }
+})
 </script>
 
 <style scoped>

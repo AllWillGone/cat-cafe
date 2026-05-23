@@ -30,7 +30,7 @@
         </el-menu-item>
         <el-menu-item index="/home/likes">
           <el-icon><Star /></el-icon>
-          <span>点赞</span>
+          <span>点评</span>
         </el-menu-item>
         <el-menu-item index="/home/profile">
           <el-icon><User /></el-icon>
@@ -98,9 +98,9 @@ const handleLogout = () => {
 </script>
 
 <style scoped>
-.user-layout { min-height: 100vh; background: #f5f5f5; }
+.user-layout { min-height: 100vh; background: #FFF6EC; }
 .user-header { display: flex; align-items: center; background: #fff; border-bottom: 1px solid #e6e6e6; padding: env(safe-area-inset-top, 0px) 20px 0; min-height: 60px; }
-.logo { font-size: 18px; font-weight: bold; color: #409EFF; margin-right: 30px; white-space: nowrap; }
+.logo { font-size: 18px; font-weight: bold; color: #F3A35C; margin-right: 30px; white-space: nowrap; }
 .nav-menu { flex: 1; border-bottom: none !important; }
 .nav-menu .el-menu-item { height: 60px; line-height: 60px; }
 .header-right { display: flex; align-items: center; gap: 8px; margin-left: 20px; }

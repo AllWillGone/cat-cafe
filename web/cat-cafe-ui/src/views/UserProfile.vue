@@ -34,7 +34,7 @@
           <el-input v-model="form.userName" maxlength="50" />
         </el-form-item>
         <el-form-item label="手机号">
-          <el-input v-model="form.userPhone" maxlength="20" />
+          <el-input v-model="form.userPhone" maxlength="11" placeholder="请输入11位手机号" />
         </el-form-item>
         <el-form-item label="性别">
           <el-radio-group v-model="form.gender">
@@ -44,7 +44,7 @@
           </el-radio-group>
         </el-form-item>
         <el-form-item label="生日">
-          <el-date-picker v-model="form.birthday" type="date" value-format="YYYY-MM-DD" />
+          <el-date-picker v-model="form.birthday" type="date" value-format="YYYY-MM-DD" :disabled-date="disabledDate" />
         </el-form-item>
         <el-form-item label="注册时间">
           <el-input :model-value="profile.registerTime" disabled />
@@ -74,15 +74,29 @@
         </el-form-item>
       </el-form>
     </el-card>
+
+    <el-card style="margin-top:20px">
+      <template #header>
+        <h3>账号管理</h3>
+      </template>
+      <el-button type="danger" @click="deleteAccount">注销账号</el-button>
+    </el-card>
   </div>
 </template>
 
 <script setup>
 import { ref, reactive, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
 import api from '../api/index'
-import { ElMessage } from 'element-plus'
+import { ElMessage, ElMessageBox } from 'element-plus'
+
+const router = useRouter()
 
 const uploadingPhoto = ref(false)
+
+const disabledDate = (time) => {
+  return time.getTime() > Date.now() || time.getTime() < new Date('1920-01-01').getTime()
+}
 
 const beforeUpload = (file) => {
   const isImage = file.type.startsWith('image/')
@@ -145,6 +159,10 @@ const fetchProfile = async () => {
 }
 
 const saveProfile = async () => {
+  if (form.userPhone && !/^1[3-9]\d{9}$/.test(form.userPhone)) {
+    ElMessage.warning('请输入正确的11位手机号')
+    return
+  }
   saving.value = true
   try {
     const body = {
@@ -221,6 +239,24 @@ const changePassword = async () => {
     ElMessage.error(err.response?.data?.detail || '密码修改失败')
   } finally {
     changingPwd.value = false
+  }
+}
+
+const deleteAccount = async () => {
+  try {
+    await ElMessageBox.confirm(
+      '注销后无法恢复，确定要注销账号吗？',
+      '确认注销',
+      { confirmButtonText: '确认注销', cancelButtonText: '取消', type: 'warning' }
+    )
+  } catch { return }
+  try {
+    await api.delete('/api/user/me')
+    ElMessage.success('账号已注销')
+    localStorage.clear()
+    router.push('/login')
+  } catch (err) {
+    ElMessage.error(err.response?.data?.detail || '注销失败')
   }
 }
 

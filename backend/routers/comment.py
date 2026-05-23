@@ -67,18 +67,28 @@ def create_comment(
 
 @router.get("/comments", response_model=PaginatedComments)
 def list_comments(
-    targetType: int | None = None,               # 查询参数，筛选：0=商品 1=猫咪
-    targetId: int | None = None,                 # 查询参数，和目标类型配合使用
+    targetType: int | None = None,
+    targetId: int | None = None,
+    sortBy: str = "default",
     skip: int = 0,
     limit: int = 20,
     db: Session = Depends(get_db),
 ):
     """查看评论 — 公开，只展示审核通过的（auditStatus=1），可按 targetType+targetId 联合筛选"""
-    q = db.query(Comment).filter(Comment.auditStatus == 1)  # 只展示已通过审核的
-    if targetType is not None and targetId is not None:     # 两个筛选条件同时传入才生效
+    like_sub = db.query(Likes.objectId, func.count(Likes.likeId).label('cnt')).filter(
+        Likes.likeType == 1
+    ).group_by(Likes.objectId).subquery()
+    q = db.query(Comment).outerjoin(like_sub, Comment.commentId == like_sub.c.objectId).filter(
+        Comment.auditStatus == 1
+    )
+    if targetType is not None and targetId is not None:
         q = q.filter(Comment.targetType == targetType, Comment.targetId == targetId)
     total = q.count()
-    comments = q.order_by(Comment.publishTime.desc()).offset(skip).limit(limit).all()
+    if sortBy == "likeCount":
+        q = q.order_by(func.coalesce(like_sub.c.cnt, 0).desc(), Comment.publishTime.desc())
+    else:
+        q = q.order_by(Comment.publishTime.desc())
+    comments = q.offset(skip).limit(limit).all()
 
     # 批量查询评论点赞数
     comment_ids = [c.commentId for c in comments]

@@ -183,7 +183,8 @@ const handleSignup = async () => {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
-  background: var(--bg);
+  background: linear-gradient(135deg, rgba(243, 163, 92, 0.15), rgba(255, 207, 154, 0.3)),
+              url('../assets/hero.png') center/cover no-repeat;
 }
 
 .signup-card {

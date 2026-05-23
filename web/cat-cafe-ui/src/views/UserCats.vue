@@ -24,16 +24,19 @@
       @row-click="(row) => $router.push(`/home/cats/${row.catId}`)"
     >
       <el-table-column prop="catId" label="ID" width="60" />
-      <el-table-column label="照片" width="90">
+      <el-table-column label="照片" width="100">
         <template #default="{ row }">
-          <img
-            :src="row.photoUrl"
-            fit="cover"
-            style="width:60px;height:60px;border-radius:6px;object-fit:cover;cursor:pointer"
-            @click="previewImage(row.photoUrl)"
-            @error="(e) => { e.target.style.display = 'none'; e.target.nextElementSibling.style.display = 'inline'; }"
-          />
-          <span style="font-size:28px;display:none">🐱</span>
+          <div style="position:relative;width:70px;height:70px;display:flex;align-items:center;justify-content:center">
+            <span style="font-size:36px">🐱</span>
+            <img
+              v-if="row.photoUrl && !imgError[row.catId]"
+              :key="row.catId"
+              :src="row.photoUrl"
+              style="position:absolute;top:0;left:0;width:70px;height:70px;border-radius:6px;object-fit:cover;cursor:pointer"
+              @click.stop="previewImage(row.photoUrl)"
+              @error="imgError[row.catId] = true"
+            />
+          </div>
         </template>
       </el-table-column>
       <el-table-column prop="catName" label="名字" width="120" />
@@ -124,11 +127,12 @@ const cats = ref([])
 const loading = ref(false)
 const keyword = ref('')
 const sortBy = ref('default')
+const imgError = reactive({})
 
 const fetchCats = async () => {
   loading.value = true
   try {
-    const params = { sortBy: sortBy.value }
+    const params = { sortBy: sortBy.value, includeAll: true }
     if (keyword.value) params.keyword = keyword.value
     const [catRes, myLikesRes] = await Promise.all([
       api.get('/api/cats', { params }),

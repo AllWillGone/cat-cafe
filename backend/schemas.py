@@ -15,8 +15,12 @@ from pydantic import BaseModel, ConfigDict, Field, AfterValidator
 
 
 def _check_birthday(v: date | None) -> date | None:
-    if v is not None and v > date.today():
+    if v is None:
+        return v
+    if v > date.today():
         raise ValueError("生日不能设置为未来日期")
+    if v < date(1920, 1, 1):
+        raise ValueError("生日日期不合理")
     return v
 
 

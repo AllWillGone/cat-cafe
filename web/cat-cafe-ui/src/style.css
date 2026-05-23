@@ -4,10 +4,18 @@
   --bg: #fff;
   --border: #e5e4e7;
   --code-bg: #f4f3ec;
-  --accent: #aa3bff;
-  --accent-bg: rgba(170, 59, 255, 0.1);
-  --accent-border: rgba(170, 59, 255, 0.5);
+  --accent: #F3A35C;
+  --accent-bg: rgba(243, 163, 92, 0.1);
+  --accent-border: rgba(243, 163, 92, 0.5);
   --social-bg: rgba(244, 243, 236, 0.5);
+
+  --el-color-primary: #F3A35C;
+  --el-color-primary-light-3: #F5B87D;
+  --el-color-primary-light-5: #F8CD9F;
+  --el-color-primary-light-7: #FBE2C2;
+  --el-color-primary-light-8: #FCEFE0;
+  --el-color-primary-light-9: #FEF8F0;
+  --el-color-primary-dark-2: #D98B3F;
   --shadow:
     rgba(0, 0, 0, 0.1) 0 10px 15px -3px, rgba(0, 0, 0, 0.05) 0 4px 6px -2px;
 
