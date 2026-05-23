@@ -174,4 +174,8 @@ public interface ApiService {
     @Multipart
     @POST("api/upload")
     Call<Map<String, Object>> uploadAvatar(@Part("type") RequestBody type, @Part MultipartBody.Part file);
+
+    @Multipart
+    @POST("api/admin/upload")
+    Call<Map<String, Object>> uploadAdminImage(@Part("type") RequestBody type, @Part MultipartBody.Part file);
 }

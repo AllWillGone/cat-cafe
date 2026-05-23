@@ -2,10 +2,16 @@ package com.catcafe.app.ui;
 
 import android.content.Context;
 import android.content.Intent;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 
 import com.catcafe.app.R;
 import com.catcafe.app.core.AppConfig;
@@ -16,6 +22,7 @@ import com.catcafe.app.network.ApiCallback;
 import com.catcafe.app.network.ApiClient;
 import com.catcafe.app.network.NetworkHelper;
 import com.catcafe.app.util.UiText;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -26,6 +33,9 @@ import java.util.Map;
 public class AdminProductsActivity extends AdminListActivityBase {
     private final String[] filters = {"全部商品", "服务", "餐饮", "猫咖用品", "在售", "已下架"};
     private AdminManageAdapter<ProductDetail> adapter;
+    private ActivityResultLauncher<String> pickProductImage;
+    private TextInputEditText activeImageInput;
+    private ImageView activeImagePreview;
 
     public static Intent intent(Context context) {
         return new Intent(context, AdminProductsActivity.class);
@@ -33,6 +43,14 @@ public class AdminProductsActivity extends AdminListActivityBase {
 
     @Override
     protected void configure() {
+        pickProductImage = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null && activeImageInput != null && activeImagePreview != null) {
+                        AdminImageUploadHelper.upload(this, uri, "product", "product", activeImageInput, activeImagePreview);
+                    }
+                }
+        );
         setTitleText("商品管理");
         keywordLayout.setHint("商品名搜索");
         setFilterLabels(filters);
@@ -109,6 +127,8 @@ public class AdminProductsActivity extends AdminListActivityBase {
         TextInputEditText priceInput = addInput(form, "价格", product == null || product.price == null ? "" : product.price.toPlainString(), false);
         TextInputEditText stockInput = addInput(form, "库存", product == null ? "" : String.valueOf(product.stockQuantity), false);
         TextInputEditText imageInput = addInput(form, "图片 URL 或相对路径", product == null ? "" : product.imageUrl, false);
+        ImageView imagePreview = addImagePreview(form, product == null ? "" : product.imageUrl);
+        addUploadButton(form, "上传商品图片", imageInput, imagePreview);
         TextInputEditText descInput = addInput(form, "描述", product == null ? "" : product.description, true);
         Spinner statusInput = addSpinner(form, "状态", new String[]{"已下架", "在售"}, product == null ? 1 : product.status);
 
@@ -241,6 +261,45 @@ public class AdminProductsActivity extends AdminListActivityBase {
         layout.addView(input);
         form.addView(layout);
         return input;
+    }
+
+    private ImageView addImagePreview(LinearLayout form, String path) {
+        ImageView preview = new ImageView(this);
+        int size = (int) (96 * getResources().getDisplayMetrics().density);
+        int margin = (int) (8 * getResources().getDisplayMetrics().density);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(size, size);
+        params.topMargin = margin;
+        params.bottomMargin = margin;
+        preview.setLayoutParams(params);
+        preview.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        form.addView(preview);
+        AdminImageUploadHelper.loadPreview(this, preview, path);
+        return preview;
+    }
+
+    private void addUploadButton(LinearLayout form, String label, TextInputEditText input, ImageView preview) {
+        MaterialButton button = new MaterialButton(this);
+        button.setText(label);
+        button.setOnClickListener(v -> {
+            activeImageInput = input;
+            activeImagePreview = preview;
+            pickProductImage.launch("image/*");
+        });
+        form.addView(button);
+        input.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                AdminImageUploadHelper.loadPreview(AdminProductsActivity.this, preview, s == null ? "" : s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
     }
 
     private Spinner addSpinner(LinearLayout form, String label, String[] options, int selected) {

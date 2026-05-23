@@ -2,10 +2,16 @@ package com.catcafe.app.ui;
 
 import android.content.Context;
 import android.content.Intent;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 
 import com.catcafe.app.R;
 import com.catcafe.app.core.AppConfig;
@@ -16,6 +22,7 @@ import com.catcafe.app.network.ApiCallback;
 import com.catcafe.app.network.ApiClient;
 import com.catcafe.app.network.NetworkHelper;
 import com.catcafe.app.util.UiText;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -25,6 +32,9 @@ import java.util.Map;
 public class AdminCatsActivity extends AdminListActivityBase {
     private final String[] filters = {"全部猫咪", "休息中", "在岗中"};
     private AdminManageAdapter<CatDetail> adapter;
+    private ActivityResultLauncher<String> pickCatImage;
+    private TextInputEditText activePhotoInput;
+    private ImageView activePhotoPreview;
 
     public static Intent intent(Context context) {
         return new Intent(context, AdminCatsActivity.class);
@@ -32,6 +42,14 @@ public class AdminCatsActivity extends AdminListActivityBase {
 
     @Override
     protected void configure() {
+        pickCatImage = registerForActivityResult(
+                new ActivityResultContracts.GetContent(),
+                uri -> {
+                    if (uri != null && activePhotoInput != null && activePhotoPreview != null) {
+                        AdminImageUploadHelper.upload(this, uri, "cat", "cat", activePhotoInput, activePhotoPreview);
+                    }
+                }
+        );
         setTitleText("猫咪管理");
         keywordLayout.setHint("猫名、品种、性格搜索");
         setFilterLabels(filters);
@@ -97,6 +115,8 @@ public class AdminCatsActivity extends AdminListActivityBase {
         Spinner statusInput = addSpinner(form, new String[]{"休息中", "在岗中"}, cat == null ? 1 : cat.status);
         TextInputEditText personalityInput = addInput(form, "性格", cat == null ? "" : cat.personality, true);
         TextInputEditText photoInput = addInput(form, "照片 URL 或相对路径", cat == null ? "" : cat.photoUrl, false);
+        ImageView photoPreview = addImagePreview(form, cat == null ? "" : cat.photoUrl);
+        addUploadButton(form, "上传猫咪照片", photoInput, photoPreview);
         TextInputEditText notesInput = addInput(form, "备注", cat == null ? "" : cat.notes, true);
 
         new MaterialAlertDialogBuilder(this)
@@ -201,6 +221,45 @@ public class AdminCatsActivity extends AdminListActivityBase {
         layout.addView(input);
         form.addView(layout);
         return input;
+    }
+
+    private ImageView addImagePreview(LinearLayout form, String path) {
+        ImageView preview = new ImageView(this);
+        int size = (int) (96 * getResources().getDisplayMetrics().density);
+        int margin = (int) (8 * getResources().getDisplayMetrics().density);
+        LinearLayout.LayoutParams params = new LinearLayout.LayoutParams(size, size);
+        params.topMargin = margin;
+        params.bottomMargin = margin;
+        preview.setLayoutParams(params);
+        preview.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        form.addView(preview);
+        AdminImageUploadHelper.loadPreview(this, preview, path);
+        return preview;
+    }
+
+    private void addUploadButton(LinearLayout form, String label, TextInputEditText input, ImageView preview) {
+        MaterialButton button = new MaterialButton(this);
+        button.setText(label);
+        button.setOnClickListener(v -> {
+            activePhotoInput = input;
+            activePhotoPreview = preview;
+            pickCatImage.launch("image/*");
+        });
+        form.addView(button);
+        input.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {
+            }
+
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {
+                AdminImageUploadHelper.loadPreview(AdminCatsActivity.this, preview, s == null ? "" : s.toString());
+            }
+
+            @Override
+            public void afterTextChanged(Editable s) {
+            }
+        });
     }
 
     private Spinner addSpinner(LinearLayout form, String[] options, int selected) {
