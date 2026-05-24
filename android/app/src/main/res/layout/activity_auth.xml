@@ -23,6 +23,7 @@
             android:padding="20dp">
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/authAccountLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content">
 
@@ -34,6 +35,7 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/authUserNameLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp">
@@ -46,6 +48,7 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/authPhoneLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
                 android:layout_marginTop="12dp">
@@ -58,9 +61,13 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/authPasswordLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp">
+                android:layout_marginTop="12dp"
+                app:endIconContentDescription="显示或隐藏密码"
+                app:endIconDrawable="@drawable/ic_visibility_off_24"
+                app:endIconMode="custom">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/authPasswordInput"
@@ -71,9 +78,13 @@
             </com.google.android.material.textfield.TextInputLayout>
 
             <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/authConfirmLayout"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_marginTop="12dp">
+                android:layout_marginTop="12dp"
+                app:endIconContentDescription="显示或隐藏密码"
+                app:endIconDrawable="@drawable/ic_visibility_off_24"
+                app:endIconMode="custom">
 
                 <com.google.android.material.textfield.TextInputEditText
                     android:id="@+id/authConfirmInput"

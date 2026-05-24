@@ -2,6 +2,7 @@ package com.catcafe.app.ui;
 
 import android.os.Bundle;
 import android.os.CountDownTimer;
+import android.text.method.PasswordTransformationMethod;
 import android.text.InputFilter;
 import android.util.Log;
 import android.view.View;
@@ -36,6 +37,11 @@ public class AuthActivity extends BaseToolbarActivity {
     public static final String MODE_REGISTER = "register";
 
     private boolean registerMode;
+    private TextInputLayout accountLayout;
+    private TextInputLayout phoneLayout;
+    private TextInputLayout passwordLayout;
+    private TextInputLayout confirmLayout;
+    private TextInputLayout userNameLayout;
     private TextInputEditText accountInput;
     private TextInputEditText phoneInput;
     private TextInputEditText passwordInput;
@@ -55,6 +61,11 @@ public class AuthActivity extends BaseToolbarActivity {
         sessionManager = new SessionManager(this);
         registerMode = MODE_REGISTER.equals(getIntent().getStringExtra(EXTRA_MODE));
 
+        accountLayout = findViewById(R.id.authAccountLayout);
+        phoneLayout = findViewById(R.id.authPhoneLayout);
+        passwordLayout = findViewById(R.id.authPasswordLayout);
+        confirmLayout = findViewById(R.id.authConfirmLayout);
+        userNameLayout = findViewById(R.id.authUserNameLayout);
         accountInput = findViewById(R.id.authAccountInput);
         phoneInput = findViewById(R.id.authPhoneInput);
         passwordInput = findViewById(R.id.authPasswordInput);
@@ -70,6 +81,8 @@ public class AuthActivity extends BaseToolbarActivity {
             renderMode();
         });
         forgotPasswordButton.setOnClickListener(v -> showForgotPasswordDialog());
+        setupPasswordToggle(passwordLayout, passwordInput);
+        setupPasswordToggle(confirmLayout, confirmInput);
         renderMode();
     }
 
@@ -80,10 +93,10 @@ public class AuthActivity extends BaseToolbarActivity {
             if (getSupportActionBar() != null) {
                 getSupportActionBar().setTitle("注册");
             }
-            accountInput.setVisibility(gone);
-            phoneInput.setVisibility(visible);
-            confirmInput.setVisibility(visible);
-            userNameInput.setVisibility(visible);
+            accountLayout.setVisibility(gone);
+            phoneLayout.setVisibility(visible);
+            confirmLayout.setVisibility(visible);
+            userNameLayout.setVisibility(visible);
             submitButton.setText("注册");
             forgotPasswordButton.setVisibility(gone);
             switchButton.setText("切换到登录");
@@ -91,10 +104,10 @@ public class AuthActivity extends BaseToolbarActivity {
             if (getSupportActionBar() != null) {
                 getSupportActionBar().setTitle("登录");
             }
-            accountInput.setVisibility(visible);
-            phoneInput.setVisibility(gone);
-            confirmInput.setVisibility(gone);
-            userNameInput.setVisibility(gone);
+            accountLayout.setVisibility(visible);
+            phoneLayout.setVisibility(gone);
+            confirmLayout.setVisibility(gone);
+            userNameLayout.setVisibility(gone);
             submitButton.setText("登录");
             forgotPasswordButton.setVisibility(visible);
             switchButton.setText("切换到注册");
@@ -120,8 +133,8 @@ public class AuthActivity extends BaseToolbarActivity {
         );
         content.addView(wrapInput(phoneInput, "手机号", 0));
         content.addView(wrapInput(codeInput, "验证码", 12));
-        content.addView(wrapInput(newPasswordInput, "新密码", 12));
-        content.addView(wrapInput(confirmPasswordInput, "确认密码", 12));
+        content.addView(wrapPasswordInput(newPasswordInput, "新密码", 12));
+        content.addView(wrapPasswordInput(confirmPasswordInput, "确认密码", 12));
 
         androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setTitle("手机号找回密码")
@@ -162,6 +175,32 @@ public class AuthActivity extends BaseToolbarActivity {
         layout.setLayoutParams(params);
         layout.addView(input);
         return layout;
+    }
+
+    private TextInputLayout wrapPasswordInput(TextInputEditText input, String hint, int topMarginDp) {
+        TextInputLayout layout = wrapInput(input, hint, topMarginDp);
+        layout.setEndIconMode(TextInputLayout.END_ICON_CUSTOM);
+        layout.setEndIconDrawable(R.drawable.ic_visibility_off_24);
+        layout.setEndIconContentDescription("显示或隐藏密码");
+        setupPasswordToggle(layout, input);
+        return layout;
+    }
+
+    private void setupPasswordToggle(TextInputLayout layout, TextInputEditText input) {
+        setPasswordVisible(layout, input, false);
+        layout.setEndIconOnClickListener(v -> {
+            boolean willShow = input.getTransformationMethod() instanceof PasswordTransformationMethod;
+            setPasswordVisible(layout, input, willShow);
+        });
+    }
+
+    private void setPasswordVisible(TextInputLayout layout, TextInputEditText input, boolean visible) {
+        int selection = Math.max(input.getSelectionStart(), 0);
+        input.setTransformationMethod(visible ? null : PasswordTransformationMethod.getInstance());
+        layout.setEndIconDrawable(visible ? R.drawable.ic_visibility_24 : R.drawable.ic_visibility_off_24);
+        if (input.getText() != null) {
+            input.setSelection(Math.min(selection, input.getText().length()));
+        }
     }
 
     private void sendSmsCode(TextInputEditText phoneInput, Button smsButton) {
