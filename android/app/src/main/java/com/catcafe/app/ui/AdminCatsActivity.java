@@ -150,6 +150,10 @@ public class AdminCatsActivity extends AdminListActivityBase {
             toast("请填写猫咪完整信息");
             return null;
         }
+        if (!BirthdayRules.isValid(birthday)) {
+            toast(BirthdayRules.ERROR_MESSAGE);
+            return null;
+        }
         return new CatWriteRequest(name, breed, birthday, statusInput.getSelectedItemPosition(), personality, photo, notes);
     }
 

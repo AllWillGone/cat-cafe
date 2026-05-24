@@ -85,7 +85,8 @@ public interface ApiService {
     Call<java.util.Map<String, Object>> resetPasswordByPhone(@Body ResetPasswordByPhoneRequest request);
 
     @GET("api/comments")
-    Call<PaginatedComments> getComments(@Query("targetType") Integer targetType, @Query("targetId") Long targetId, @Query("skip") int skip, @Query("limit") int limit);
+    Call<PaginatedComments> getComments(@Query("targetType") Integer targetType, @Query("targetId") Long targetId,
+                                         @Query("sortBy") String sortBy, @Query("skip") int skip, @Query("limit") int limit);
 
     @GET("api/comments/my")
     Call<PaginatedComments> getMyComments(@Query("targetType") Integer targetType, @Query("skip") int skip, @Query("limit") int limit);

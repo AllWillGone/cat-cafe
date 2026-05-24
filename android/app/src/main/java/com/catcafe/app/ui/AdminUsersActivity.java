@@ -94,8 +94,13 @@ public class AdminUsersActivity extends AdminListActivityBase {
                 .setNegativeButton("取消", null)
                 .setPositiveButton("保存", (dialog, which) -> {
                     Integer gender = genderInput.getSelectedItemPosition() == 0 ? null : genderInput.getSelectedItemPosition();
+                    String birthday = emptyToNull(textOf(birthdayInput));
+                    if (!BirthdayRules.isBlankOrValid(birthday)) {
+                        toast(BirthdayRules.ERROR_MESSAGE);
+                        return;
+                    }
                     AdminUserUpdateRequest request = new AdminUserUpdateRequest(
-                            textOf(nameInput), gender, emptyToNull(textOf(birthdayInput)), textOf(phoneInput), textOf(avatarInput));
+                            textOf(nameInput), gender, birthday, textOf(phoneInput), textOf(avatarInput));
                     updateUser(user.userId, request);
                 })
                 .show();

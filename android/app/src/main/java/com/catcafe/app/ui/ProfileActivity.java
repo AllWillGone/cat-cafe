@@ -122,6 +122,10 @@ public class ProfileActivity extends BaseToolbarActivity {
                 Toast.makeText(ProfileActivity.this, "用户名不能为空", Toast.LENGTH_SHORT).show();
                 return;
             }
+            if (!BirthdayRules.isBlankOrValid(birthday)) {
+                Toast.makeText(ProfileActivity.this, BirthdayRules.ERROR_MESSAGE, Toast.LENGTH_SHORT).show();
+                return;
+            }
             SessionManager session = new SessionManager(this);
             NetworkHelper.enqueue(this,
                     ApiClient.getService(this).updateMe(new UserUpdateRequest(
@@ -251,7 +255,7 @@ public class ProfileActivity extends BaseToolbarActivity {
                 calendar.get(Calendar.MONTH),
                 calendar.get(Calendar.DAY_OF_MONTH)
         );
-        dialog.getDatePicker().setMaxDate(System.currentTimeMillis());
+        BirthdayRules.applyTo(dialog);
         dialog.show();
     }
 

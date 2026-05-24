@@ -132,7 +132,7 @@ public class CatDetailActivity extends BaseToolbarActivity {
     }
 
     private void loadComments(boolean trackRefresh) {
-        NetworkHelper.enqueue(this, ApiClient.getService(this).getComments(1, catId, 0, 20), new ApiCallback<PaginatedComments>() {
+        NetworkHelper.enqueue(this, ApiClient.getService(this).getComments(1, catId, "likeCount", 0, 20), new ApiCallback<PaginatedComments>() {
             @Override
             public void onSuccess(PaginatedComments data) {
                 finishRefreshRequest(trackRefresh);

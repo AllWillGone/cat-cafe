@@ -145,7 +145,7 @@ public class ProductDetailActivity extends BaseDetailActivity {
     }
 
     private void loadComments(boolean trackRefresh) {
-        NetworkHelper.enqueue(this, ApiClient.getService(this).getComments(0, productId, 0, 20), new ApiCallback<PaginatedComments>() {
+        NetworkHelper.enqueue(this, ApiClient.getService(this).getComments(0, productId, "likeCount", 0, 20), new ApiCallback<PaginatedComments>() {
             @Override
             public void onSuccess(PaginatedComments data) {
                 finishRefreshRequest(trackRefresh);
