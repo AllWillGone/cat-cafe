@@ -177,10 +177,10 @@ docs/            开发日志、需求分析
 - 建表用 init.sql 手动执行，不用 SQLAlchemy create_all
 - 数据库字段 camelCase，接口路径 kebab-case
 - 后端直接托管 `web/cat-cafe-ui/public` 下的 `/cats`、`/products`、`/avatars` 静态资源
-- 管理员可通过 `POST /api/upload` 上传图片（Web 端有文件选择器，无需手动输路径）
+- 管理员可通过 `POST /api/admin/upload` 上传商品/猫咪/头像图片；普通用户头像上传走 `POST /api/upload`
 - Docker 生产环境：backend 和 nginx 通过 `./uploads/` 共享目录传递上传文件
 
-### 接口总览（41 个 /api 接口，全部完成）
+### 接口总览（42 个 /api 接口，全部完成）
 
 | 模块 | 数量 | 文件 |
 | --- | --- | --- |
@@ -190,7 +190,7 @@ docs/            开发日志、需求分析
 | 评论 | 6 | routers/comment.py |
 | 点赞 | 3 | routers/likes.py |
 | 订单 | 6 | routers/order.py |
-| 上传 | 1 | routers/upload.py |
+| 上传 | 2 | routers/upload.py |
 
 完整接口清单和测试状态见 backend/CLAUDE.md。
 

@@ -25,14 +25,14 @@ uvicorn main:app --reload
   - comment.py — 评论模块（6 接口）
   - likes.py — 点赞模块（3 接口）
   - order.py — 订单模块（6 接口）
-  - upload.py — 上传模块（1 接口）
+  - upload.py — 上传模块（2 接口：管理员图片上传、用户头像上传）
 - .env — 数据库密码 + JWT 密钥（Git 不上传）
 - .env.example — 本地 .env 模板，不含真实密码
 - .venv/ — 虚拟环境（Git 不上传）
 
-## 当前接口总览（41 个 /api 接口，不含 /health）
+## 当前接口总览（42 个 /api 接口，不含 /health）
 
-Web 整合后接口已扩展；最新数量以代码、`/docs` 和 `docs/开发日志2.md` 附件为准。
+Web、Android 整合后接口已扩展；最新数量以 `backend/routers/`、`backend/schemas.py` 和 `/docs` 为准。`docs/开发日志.md`、`docs/开发日志2.md` 中的早期接口清单保留为历史记录，不再作为最终数量依据。
 
 ### 用户模块（12/12 ✅）
 | 方法 | 路径 | 状态 |
@@ -98,14 +98,15 @@ Web 整合后接口已扩展；最新数量以代码、`/docs` 和 `docs/开发�
 | PUT | /api/orders/{id} | ✅ |
 | DELETE | /api/orders/{id} | ✅ |
 
-### 上传模块（1/1 ✅）
+### 上传模块（2/2 ✅）
 | 方法 | 路径 | 状态 |
 |------|------|------|
+| POST | /api/admin/upload | ✅ |
 | POST | /api/upload | ✅ |
 
 ## 接口编写规范
 每个接口：在 schemas.py 定义请求/响应 → 在 routers/ 写路由（db: Session = Depends(get_db)）→ /docs 测试
-详细 API 清单见 docs/开发日志2.md 附件；docs/开发日志.md 下方旧清单只保留第一阶段历史记录
+详细 API 清单以本文件和 `/docs` 为准；docs/开发日志.md、docs/开发日志2.md 下方旧清单只保留阶段历史记录。
 
 ## 命名
 数据库字段 camelCase，接口路径 kebab-case
