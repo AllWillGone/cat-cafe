@@ -2,10 +2,11 @@ package com.catcafe.app.ui;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.LinearLayout;
-import android.widget.Spinner;
+import android.widget.RadioButton;
+import android.widget.TextView;
 
 import com.catcafe.app.R;
 import com.catcafe.app.core.AppConfig;
@@ -17,9 +18,8 @@ import com.catcafe.app.network.ApiCallback;
 import com.catcafe.app.network.ApiClient;
 import com.catcafe.app.network.NetworkHelper;
 import com.catcafe.app.util.UiText;
+import com.google.android.material.card.MaterialCardView;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
-import com.google.android.material.textfield.TextInputEditText;
-import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -27,6 +27,14 @@ import java.util.Map;
 
 public class AdminOrdersActivity extends AdminListActivityBase {
     private final String[] filters = {"全部订单", "未支付", "已支付", "待取货", "已完成", "已取消"};
+    private final String[] statusOptions = {"未支付", "已支付", "待取货", "已完成", "已取消"};
+    private final String[] statusDescriptions = {
+            "客户已下单，等待支付",
+            "已完成付款，等待备货",
+            "商品已备好，等待取货",
+            "订单已完成，可归档",
+            "订单已取消，库存已处理"
+    };
     private AdminManageAdapter<BatchOrderResponse> adapter;
 
     public static Intent intent(Context context) {
@@ -75,8 +83,8 @@ public class AdminOrdersActivity extends AdminListActivityBase {
         holder.primaryButton.setOnClickListener(v -> showDetail(order));
 
         holder.secondaryButton.setVisibility(View.VISIBLE);
-        holder.secondaryButton.setText("编辑");
-        holder.secondaryButton.setOnClickListener(v -> showEdit(order));
+        holder.secondaryButton.setText("状态");
+        holder.secondaryButton.setOnClickListener(v -> showStatusDialog(order));
 
         holder.dangerButton.setVisibility(View.VISIBLE);
         holder.dangerButton.setText("删除");
@@ -91,47 +99,108 @@ public class AdminOrdersActivity extends AdminListActivityBase {
                 .show();
     }
 
-    private void showEdit(BatchOrderResponse order) {
-        LinearLayout form = new LinearLayout(this);
-        form.setOrientation(LinearLayout.VERTICAL);
+    private void showStatusDialog(BatchOrderResponse order) {
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
         int padding = getResources().getDimensionPixelSize(R.dimen.order_dialog_padding);
-        form.setPadding(padding, 0, padding, 0);
+        content.setPadding(padding, 0, padding, 0);
 
-        Spinner statusInput = addSpinner(form, filters, order.orderStatus + 1);
-        TextInputEditText nameInput = addInput(form, "联系人", order.userName, false);
-        TextInputEditText phoneInput = addInput(form, "手机号", order.userPhone, false);
-        TextInputEditText noteInput = addInput(form, "备注", order.orderNote, true);
+        TextView summary = new TextView(this);
+        summary.setText(UiText.batchLabel(order) + "\n" + order.userName + " · " + UiText.price(order.totalAmount));
+        summary.setTextColor(getColor(R.color.cat_muted));
+        summary.setTextSize(13);
+        summary.setLineSpacing(dp(2), 1f);
+        content.addView(summary);
+
+        final int[] selectedStatus = {Math.max(0, Math.min(order.orderStatus, statusOptions.length - 1))};
+        List<MaterialCardView> cards = new ArrayList<>();
+        List<RadioButton> radioButtons = new ArrayList<>();
+        for (int i = 0; i < statusOptions.length; i++) {
+            content.addView(createStatusCard(i, selectedStatus, cards, radioButtons));
+        }
+        applyStatusSelection(cards, radioButtons, selectedStatus[0]);
 
         new MaterialAlertDialogBuilder(this)
-                .setTitle("编辑订单")
-                .setView(form)
+                .setTitle("修改订单状态")
+                .setView(content)
                 .setNegativeButton("取消", null)
                 .setPositiveButton("保存", (dialog, which) -> {
-                    String userName = textOf(nameInput);
-                    String userPhone = textOf(phoneInput);
-                    if (userName.isEmpty() || userPhone.isEmpty()) {
-                        toast("请填写联系人和手机号");
-                        return;
-                    }
-                    int selected = statusInput.getSelectedItemPosition();
-                    Integer status = selected == 0 ? null : selected - 1;
-                    if (status != null && status == 4 && isMultiItemBatch(order)) {
-                        toast("多商品批次取消会重复恢复库存，需要先确认后端批次逻辑");
-                        return;
-                    }
-                    updateBatch(order, new OrderUpdateRequest(status, userPhone, userName, textOf(noteInput)));
+                    updateBatch(order, new OrderUpdateRequest(selectedStatus[0], null, null, null));
                 })
                 .show();
     }
 
-    private void confirmDelete(BatchOrderResponse order) {
-        if (isMultiItemBatch(order) && order.orderStatus != 3 && order.orderStatus != 4) {
-            toast("多商品非终态批次删除会重复恢复库存，需要先确认后端批次逻辑");
-            return;
+    private MaterialCardView createStatusCard(int status,
+                                              int[] selectedStatus,
+                                              List<MaterialCardView> cards,
+                                              List<RadioButton> radioButtons) {
+        MaterialCardView card = new MaterialCardView(this);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.topMargin = dp(8);
+        card.setLayoutParams(cardParams);
+        card.setRadius(dp(8));
+        card.setCardElevation(0);
+        card.setStrokeWidth(dp(1));
+        card.setClickable(true);
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(dp(12), dp(10), dp(12), dp(10));
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+        RadioButton radioButton = new RadioButton(this);
+        radioButton.setClickable(false);
+        radioButton.setFocusable(false);
+        row.addView(radioButton);
+
+        LinearLayout textColumn = new LinearLayout(this);
+        textColumn.setOrientation(LinearLayout.VERTICAL);
+        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        textParams.leftMargin = dp(8);
+        textColumn.setLayoutParams(textParams);
+
+        TextView title = new TextView(this);
+        title.setText(statusOptions[status]);
+        title.setTextColor(getColor(R.color.cat_text));
+        title.setTextSize(15);
+        title.setTypeface(null, Typeface.BOLD);
+        textColumn.addView(title);
+
+        TextView description = new TextView(this);
+        description.setText(statusDescriptions[status]);
+        description.setTextColor(getColor(R.color.cat_muted));
+        description.setTextSize(12);
+        textColumn.addView(description);
+
+        row.addView(textColumn);
+        card.addView(row);
+
+        card.setOnClickListener(v -> {
+            selectedStatus[0] = status;
+            applyStatusSelection(cards, radioButtons, status);
+        });
+
+        cards.add(card);
+        radioButtons.add(radioButton);
+        return card;
+    }
+
+    private void applyStatusSelection(List<MaterialCardView> cards, List<RadioButton> radioButtons, int selectedStatus) {
+        for (int i = 0; i < cards.size(); i++) {
+            boolean selected = i == selectedStatus;
+            cards.get(i).setCardBackgroundColor(getColor(selected ? R.color.cat_surface_alt : R.color.white));
+            cards.get(i).setStrokeColor(getColor(selected ? R.color.cat_primary : R.color.cat_border));
+            radioButtons.get(i).setChecked(selected);
         }
+    }
+
+    private void confirmDelete(BatchOrderResponse order) {
         new MaterialAlertDialogBuilder(this)
                 .setTitle("删除订单")
-                .setMessage("将逐条删除该批次内的所有订单明细。非终态订单删除时由后端恢复库存。")
+                .setMessage("确定删除该订单吗？")
                 .setNegativeButton("取消", null)
                 .setPositiveButton("删除", (dialog, which) -> deleteBatch(order))
                 .show();
@@ -143,24 +212,16 @@ public class AdminOrdersActivity extends AdminListActivityBase {
             toast("订单明细为空");
             return;
         }
-        updateNext(orderIds, 0, request);
-    }
-
-    private void updateNext(List<Long> orderIds, int index, OrderUpdateRequest request) {
-        if (index >= orderIds.size()) {
-            toast("订单已更新");
-            loadData();
-            return;
-        }
-        NetworkHelper.enqueue(this, ApiClient.getService(this).updateOrder(orderIds.get(index), request), new ApiCallback<BatchOrderResponse>() {
+        NetworkHelper.enqueue(this, ApiClient.getService(this).updateOrder(orderIds.get(0), request), new ApiCallback<BatchOrderResponse>() {
             @Override
             public void onSuccess(BatchOrderResponse data) {
-                updateNext(orderIds, index + 1, request);
+                toast("订单状态已更新为「" + UiText.orderStatus(request.orderStatus) + "」");
+                loadData();
             }
 
             @Override
             public void onError(String message) {
-                toast("部分订单未更新：" + message);
+                toast(message);
                 loadData();
             }
         });
@@ -172,24 +233,16 @@ public class AdminOrdersActivity extends AdminListActivityBase {
             toast("订单明细为空");
             return;
         }
-        deleteNext(orderIds, 0);
-    }
-
-    private void deleteNext(List<Long> orderIds, int index) {
-        if (index >= orderIds.size()) {
-            toast("订单已删除");
-            loadData();
-            return;
-        }
-        NetworkHelper.enqueue(this, ApiClient.getService(this).deleteOrder(orderIds.get(index)), new ApiCallback<Map<String, Object>>() {
+        NetworkHelper.enqueue(this, ApiClient.getService(this).deleteOrder(orderIds.get(0)), new ApiCallback<Map<String, Object>>() {
             @Override
             public void onSuccess(Map<String, Object> data) {
-                deleteNext(orderIds, index + 1);
+                toast("订单已删除");
+                loadData();
             }
 
             @Override
             public void onError(String message) {
-                toast("部分订单未删除：" + message);
+                toast(message);
                 loadData();
             }
         });
@@ -204,10 +257,6 @@ public class AdminOrdersActivity extends AdminListActivityBase {
             ids.add(item.orderId);
         }
         return ids;
-    }
-
-    private boolean isMultiItemBatch(BatchOrderResponse order) {
-        return order.items != null && order.items.size() > 1;
     }
 
     private String productSummary(BatchOrderResponse order) {
@@ -251,31 +300,7 @@ public class AdminOrdersActivity extends AdminListActivityBase {
         return builder.toString();
     }
 
-    private TextInputEditText addInput(LinearLayout form, String hint, String value, boolean multiLine) {
-        TextInputLayout layout = new TextInputLayout(this);
-        layout.setHint(hint);
-        layout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
-        TextInputEditText input = new TextInputEditText(this);
-        input.setText(value == null ? "" : value);
-        input.setSingleLine(!multiLine);
-        if (multiLine) {
-            input.setMinLines(2);
-            input.setMaxLines(3);
-        }
-        layout.addView(input);
-        form.addView(layout);
-        return input;
-    }
-
-    private Spinner addSpinner(LinearLayout form, String[] options, int selected) {
-        Spinner spinner = new Spinner(this);
-        spinner.setAdapter(new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, options));
-        spinner.setSelection(Math.max(0, Math.min(selected, options.length - 1)));
-        form.addView(spinner);
-        return spinner;
-    }
-
-    private String textOf(TextInputEditText input) {
-        return input.getText() == null ? "" : input.getText().toString().trim();
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 }

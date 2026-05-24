@@ -1,10 +1,13 @@
 package com.catcafe.app.ui;
 
 import android.os.Bundle;
+import android.os.CountDownTimer;
+import android.text.InputFilter;
 import android.util.Log;
 import android.view.View;
 import android.view.inputmethod.EditorInfo;
 import android.text.InputType;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
@@ -24,9 +27,11 @@ import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.util.Map;
+import java.util.regex.Pattern;
 
 public class AuthActivity extends BaseToolbarActivity {
     private static final String TAG = "CatCafeAuth";
+    private static final Pattern PHONE_PATTERN = Pattern.compile("^1[3-9]\\d{9}$");
     public static final String EXTRA_MODE = "mode";
     public static final String MODE_REGISTER = "register";
 
@@ -40,6 +45,7 @@ public class AuthActivity extends BaseToolbarActivity {
     private MaterialButton switchButton;
     private MaterialButton forgotPasswordButton;
     private SessionManager sessionManager;
+    private CountDownTimer smsCountdownTimer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -103,27 +109,35 @@ public class AuthActivity extends BaseToolbarActivity {
 
         TextInputEditText phoneInput = newDialogInput("手机号", InputType.TYPE_CLASS_PHONE);
         TextInputEditText codeInput = newDialogInput("验证码", InputType.TYPE_CLASS_NUMBER);
+        codeInput.setFilters(new InputFilter[]{new InputFilter.LengthFilter(6)});
         TextInputEditText newPasswordInput = newDialogInput(
                 "新密码",
+                InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD
+        );
+        TextInputEditText confirmPasswordInput = newDialogInput(
+                "确认密码",
                 InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_PASSWORD
         );
         content.addView(wrapInput(phoneInput, "手机号", 0));
         content.addView(wrapInput(codeInput, "验证码", 12));
         content.addView(wrapInput(newPasswordInput, "新密码", 12));
+        content.addView(wrapInput(confirmPasswordInput, "确认密码", 12));
 
         androidx.appcompat.app.AlertDialog dialog = new MaterialAlertDialogBuilder(this)
-                .setTitle("忘记密码")
+                .setTitle("手机号找回密码")
                 .setView(content)
                 .setNegativeButton("取消", null)
                 .setNeutralButton("获取验证码", null)
                 .setPositiveButton("重置密码", null)
                 .create();
         dialog.setOnShowListener(d -> {
+            Button smsButton = dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL);
             dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_NEUTRAL)
-                    .setOnClickListener(v -> sendSmsCode(phoneInput));
+                    .setOnClickListener(v -> sendSmsCode(phoneInput, smsButton));
             dialog.getButton(androidx.appcompat.app.AlertDialog.BUTTON_POSITIVE)
-                    .setOnClickListener(v -> resetPasswordByPhone(dialog, phoneInput, codeInput, newPasswordInput));
+                    .setOnClickListener(v -> resetPasswordByPhone(dialog, phoneInput, codeInput, newPasswordInput, confirmPasswordInput));
         });
+        dialog.setOnDismissListener(d -> cancelSmsCountdown());
         dialog.show();
     }
 
@@ -131,6 +145,7 @@ public class AuthActivity extends BaseToolbarActivity {
         TextInputEditText input = new TextInputEditText(this);
         input.setHint(hint);
         input.setInputType(inputType);
+        input.setTextColor(getColor(R.color.cat_text));
         input.setSingleLine(true);
         input.setImeOptions(EditorInfo.IME_ACTION_NEXT);
         return input;
@@ -149,9 +164,9 @@ public class AuthActivity extends BaseToolbarActivity {
         return layout;
     }
 
-    private void sendSmsCode(TextInputEditText phoneInput) {
+    private void sendSmsCode(TextInputEditText phoneInput, Button smsButton) {
         String phone = textOf(phoneInput);
-        if (phone.length() < 11) {
+        if (!PHONE_PATTERN.matcher(phone).matches()) {
             toast("请输入正确手机号");
             return;
         }
@@ -162,10 +177,11 @@ public class AuthActivity extends BaseToolbarActivity {
                     public void onSuccess(Map<String, Object> data) {
                         Object code = data.get("code");
                         if (code != null) {
-                            toast("验证码已发送：" + code);
+                            toast("验证码已发送（演示：" + code + "）");
                         } else {
                             toast("验证码已发送");
                         }
+                        startSmsCountdown(smsButton);
                     }
 
                     @Override
@@ -178,11 +194,13 @@ public class AuthActivity extends BaseToolbarActivity {
     private void resetPasswordByPhone(androidx.appcompat.app.AlertDialog dialog,
                                       TextInputEditText phoneInput,
                                       TextInputEditText codeInput,
-                                      TextInputEditText newPasswordInput) {
+                                      TextInputEditText newPasswordInput,
+                                      TextInputEditText confirmPasswordInput) {
         String phone = textOf(phoneInput);
         String code = textOf(codeInput);
         String newPassword = textOf(newPasswordInput);
-        if (phone.length() < 11) {
+        String confirmPassword = textOf(confirmPasswordInput);
+        if (!PHONE_PATTERN.matcher(phone).matches()) {
             toast("请输入正确手机号");
             return;
         }
@@ -192,6 +210,10 @@ public class AuthActivity extends BaseToolbarActivity {
         }
         if (newPassword.length() < 6) {
             toast("新密码至少 6 位");
+            return;
+        }
+        if (!newPassword.equals(confirmPassword)) {
+            toast("两次密码输入不一致");
             return;
         }
         NetworkHelper.enqueue(this,
@@ -210,6 +232,31 @@ public class AuthActivity extends BaseToolbarActivity {
                         toast(message);
                     }
                 });
+    }
+
+    private void startSmsCountdown(Button smsButton) {
+        cancelSmsCountdown();
+        smsButton.setEnabled(false);
+        smsCountdownTimer = new CountDownTimer(60000, 1000) {
+            @Override
+            public void onTick(long millisUntilFinished) {
+                smsButton.setText((millisUntilFinished / 1000) + "s");
+            }
+
+            @Override
+            public void onFinish() {
+                smsButton.setEnabled(true);
+                smsButton.setText("获取验证码");
+            }
+        };
+        smsCountdownTimer.start();
+    }
+
+    private void cancelSmsCountdown() {
+        if (smsCountdownTimer != null) {
+            smsCountdownTimer.cancel();
+            smsCountdownTimer = null;
+        }
     }
 
     private void submit() {

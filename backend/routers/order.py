@@ -32,6 +32,13 @@ def _restore_stock(order: Order, db: Session):
             product.stockQuantity += o.productQuantity         # 把扣掉的库存加回去
 
 
+def _batch_orders(order: Order, db: Session) -> list[Order]:
+    """按 batchNo 取同一业务订单的全部明细；无 batchNo 的老数据只取自身"""
+    if order.batchNo:
+        return db.query(Order).filter(Order.batchNo == order.batchNo).all()
+    return [order]
+
+
 def _build_batch(orders: list[Order]) -> BatchOrderResponse:
     """将同一批次的多条 Order 行聚合为一个订单响应（含明细列表 + 总金额）"""
     first = orders[0]
@@ -76,6 +83,15 @@ def _group_by_batch(orders: list[Order]) -> list[BatchOrderResponse]:
     for o in singles:
         result.append(_build_batch([o]))                       # 单个也包装成批次格式
     result.sort(key=lambda b: b.orderTime, reverse=True)       # lambda: 匿名函数，按 orderTime 降序
+    return result
+
+
+def _load_full_batches(representatives: list[Order], db: Session) -> list[BatchOrderResponse]:
+    """列表分页先取代表行，再补齐每个 batchNo 的完整明细"""
+    result = []
+    for order in representatives:
+        result.append(_build_batch(_batch_orders(order, db)))
+    result.sort(key=lambda b: b.orderTime, reverse=True)
     return result
 
 
@@ -158,7 +174,7 @@ def list_orders(
         else:
             unique_orders.append(o)                            # 无批次号的单商品直接保留
 
-    batched = _group_by_batch(unique_orders)                   # 按批次聚合
+    batched = _load_full_batches(unique_orders, db)            # 按批次补齐完整明细
     return PaginatedOrders(total=total, items=batched)
 
 
@@ -195,7 +211,7 @@ def admin_list_orders(
             seen.add(key)
             unique.append(o)
 
-    batched = _group_by_batch(unique)
+    batched = _load_full_batches(unique, db)
     return PaginatedOrders(total=total, items=batched)
 
 
@@ -213,11 +229,7 @@ def get_order(
     if current_user.userType != 1 and order.userId != current_user.userId:  # 非管理员且不是自己的
         raise HTTPException(status_code=403, detail="无权查看此订单")
 
-    if order.batchNo:                                          # 有批次 → 拉取同批所有商品
-        siblings = db.query(Order).filter(Order.batchNo == order.batchNo).all()
-    else:
-        siblings = [order]
-    return _build_batch(siblings)
+    return _build_batch(_batch_orders(order, db))
 
 
 @router.put("/orders/{order_id}", response_model=BatchOrderResponse)
@@ -255,24 +267,26 @@ def update_order(
         elif data.orderStatus == 4 and order.orderStatus != 4: # 改为"已取消"→ 恢复库存
             _restore_stock(order, db)
 
+    targets = _batch_orders(order, db)
+
     # ── 更新传入的字段 ──
     if data.orderStatus is not None:
-        order.orderStatus = data.orderStatus
+        for target in targets:
+            target.orderStatus = data.orderStatus
     if data.userPhone is not None:
-        order.userPhone = data.userPhone
+        for target in targets:
+            target.userPhone = data.userPhone
     if data.userName is not None:
-        order.userName = data.userName
+        for target in targets:
+            target.userName = data.userName
     if data.orderNote is not None:
-        order.orderNote = data.orderNote
+        for target in targets:
+            target.orderNote = data.orderNote
 
     db.commit()
     db.refresh(order)
 
-    if order.batchNo:
-        siblings = db.query(Order).filter(Order.batchNo == order.batchNo).all()
-    else:
-        siblings = [order]
-    return _build_batch(siblings)
+    return _build_batch(_batch_orders(order, db))
 
 
 @router.delete("/orders/{order_id}")
@@ -293,6 +307,7 @@ def delete_order(
     if order.orderStatus not in (3, 4):
         raise HTTPException(status_code=400, detail="只能删除已完成或已取消的订单")
 
-    db.delete(order)
+    for target in _batch_orders(order, db):
+        db.delete(target)
     db.commit()
     return {"message": "订单已删除"}

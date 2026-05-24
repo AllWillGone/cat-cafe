@@ -7,6 +7,8 @@ import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
 
+import androidx.appcompat.app.AlertDialog;
+
 import com.catcafe.app.R;
 import com.catcafe.app.core.AppConfig;
 import com.catcafe.app.model.AdminUserListItem;
@@ -88,11 +90,13 @@ public class AdminUsersActivity extends AdminListActivityBase {
         Spinner genderInput = addSpinner(form, new String[]{"不修改", "男", "女"}, user.gender == null ? 0 : user.gender);
         TextInputEditText birthdayInput = addInput(form, "生日 yyyy-MM-dd，可留空不修改", "", false);
 
-        new MaterialAlertDialogBuilder(this)
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setTitle("编辑用户")
                 .setView(form)
                 .setNegativeButton("取消", null)
-                .setPositiveButton("保存", (dialog, which) -> {
+                .setPositiveButton("保存", null)
+                .show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
                     Integer gender = genderInput.getSelectedItemPosition() == 0 ? null : genderInput.getSelectedItemPosition();
                     String birthday = emptyToNull(textOf(birthdayInput));
                     if (!BirthdayRules.isBlankOrValid(birthday)) {
@@ -101,15 +105,15 @@ public class AdminUsersActivity extends AdminListActivityBase {
                     }
                     AdminUserUpdateRequest request = new AdminUserUpdateRequest(
                             textOf(nameInput), gender, birthday, textOf(phoneInput), textOf(avatarInput));
-                    updateUser(user.userId, request);
-                })
-                .show();
+                    updateUser(user.userId, request, dialog);
+                });
     }
 
-    private void updateUser(long userId, AdminUserUpdateRequest request) {
+    private void updateUser(long userId, AdminUserUpdateRequest request, AlertDialog dialog) {
         NetworkHelper.enqueue(this, ApiClient.getService(this).adminUpdateUser(userId, request), new ApiCallback<AdminUserListItem>() {
             @Override
             public void onSuccess(AdminUserListItem data) {
+                dialog.dismiss();
                 toast("用户信息已更新");
                 loadData();
             }
@@ -155,6 +159,7 @@ public class AdminUsersActivity extends AdminListActivityBase {
         layout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         TextInputEditText input = new TextInputEditText(this);
         input.setText(value == null ? "" : value);
+        input.setTextColor(getColor(R.color.cat_text));
         input.setSingleLine(!multiLine);
         layout.addView(input);
         form.addView(layout);

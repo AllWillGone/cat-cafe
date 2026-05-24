@@ -12,6 +12,7 @@ import android.widget.Spinner;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 
 import com.catcafe.app.R;
 import com.catcafe.app.core.AppConfig;
@@ -132,22 +133,23 @@ public class AdminProductsActivity extends AdminListActivityBase {
         TextInputEditText descInput = addInput(form, "描述", product == null ? "" : product.description, true);
         Spinner statusInput = addSpinner(form, "状态", new String[]{"已下架", "在售"}, product == null ? 1 : product.status);
 
-        new MaterialAlertDialogBuilder(this)
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setTitle(product == null ? "新增商品" : "编辑商品")
                 .setView(form)
                 .setNegativeButton("取消", null)
-                .setPositiveButton("保存", (dialog, which) -> {
+                .setPositiveButton("保存", null)
+                .show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
                     ProductWriteRequest request = productRequest(nameInput, categoryInput, priceInput, stockInput, imageInput, descInput, statusInput);
                     if (request == null) {
                         return;
                     }
                     if (product == null) {
-                        createProduct(request);
+                        createProduct(request, dialog);
                     } else {
-                        updateProduct(product.productId, request, "商品已更新");
+                        updateProduct(product.productId, request, "商品已更新", dialog);
                     }
-                })
-                .show();
+                });
     }
 
     private ProductWriteRequest productRequest(TextInputEditText nameInput, Spinner categoryInput, TextInputEditText priceInput,
@@ -177,10 +179,11 @@ public class AdminProductsActivity extends AdminListActivityBase {
         }
     }
 
-    private void createProduct(ProductWriteRequest request) {
+    private void createProduct(ProductWriteRequest request, AlertDialog dialog) {
         NetworkHelper.enqueue(this, ApiClient.getService(this).adminCreateProduct(request), new ApiCallback<ProductDetail>() {
             @Override
             public void onSuccess(ProductDetail data) {
+                dialog.dismiss();
                 toast("商品已新增");
                 loadData();
             }
@@ -193,9 +196,16 @@ public class AdminProductsActivity extends AdminListActivityBase {
     }
 
     private void updateProduct(long productId, ProductWriteRequest request, String successMessage) {
+        updateProduct(productId, request, successMessage, null);
+    }
+
+    private void updateProduct(long productId, ProductWriteRequest request, String successMessage, AlertDialog dialog) {
         NetworkHelper.enqueue(this, ApiClient.getService(this).adminUpdateProduct(productId, request), new ApiCallback<ProductDetail>() {
             @Override
             public void onSuccess(ProductDetail data) {
+                if (dialog != null) {
+                    dialog.dismiss();
+                }
                 toast(successMessage);
                 loadData();
             }
@@ -253,10 +263,12 @@ public class AdminProductsActivity extends AdminListActivityBase {
         layout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         TextInputEditText input = new TextInputEditText(this);
         input.setText(value == null ? "" : value);
+        input.setTextColor(getColor(R.color.cat_text));
         input.setSingleLine(!multiLine);
         if (multiLine) {
             input.setMinLines(2);
             input.setMaxLines(4);
+            input.setGravity(android.view.Gravity.TOP | android.view.Gravity.START);
         }
         layout.addView(input);
         form.addView(layout);

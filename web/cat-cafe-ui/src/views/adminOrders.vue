@@ -143,9 +143,7 @@ const search = () => {
 
 const changeStatus = async (row, newStatus) => {
   try {
-    await Promise.all(
-      row.items.map(item => api.put(`/api/orders/${item.orderId}`, { orderStatus: newStatus }))
-    )
+    await api.put(`/api/orders/${row.items[0].orderId}`, { orderStatus: newStatus })
     ElMessage.success(`订单状态已更新为「${statusText(newStatus)}」`)
     fetchOrders()
   } catch (err) {
@@ -158,9 +156,7 @@ const handleDelete = async (row) => {
     await ElMessageBox.confirm('确定删除该订单吗？', '删除确认', { type: 'warning' })
   } catch { return }
   try {
-    await Promise.all(
-      row.items.map(item => api.delete(`/api/orders/${item.orderId}`))
-    )
+    await api.delete(`/api/orders/${row.items[0].orderId}`)
     ElMessage.success('订单已删除')
     fetchOrders()
   } catch (err) {

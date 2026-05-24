@@ -58,6 +58,7 @@
                         android:id="@+id/cartUserNameInput"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
+                        android:textColor="@color/cat_text"
                         android:singleLine="true" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -72,6 +73,7 @@
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
                         android:inputType="phone"
+                        android:textColor="@color/cat_text"
                         android:singleLine="true" />
                 </com.google.android.material.textfield.TextInputLayout>
 
@@ -85,7 +87,9 @@
                         android:id="@+id/cartNoteInput"
                         android:layout_width="match_parent"
                         android:layout_height="wrap_content"
-                        android:maxLines="2" />
+                        android:gravity="top|start"
+                        android:maxLines="2"
+                        android:textColor="@color/cat_text" />
                 </com.google.android.material.textfield.TextInputLayout>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>

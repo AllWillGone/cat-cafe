@@ -12,6 +12,7 @@ import android.widget.Spinner;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 
 import com.catcafe.app.R;
 import com.catcafe.app.core.AppConfig;
@@ -119,22 +120,23 @@ public class AdminCatsActivity extends AdminListActivityBase {
         addUploadButton(form, "上传猫咪照片", photoInput, photoPreview);
         TextInputEditText notesInput = addInput(form, "备注", cat == null ? "" : cat.notes, true);
 
-        new MaterialAlertDialogBuilder(this)
+        AlertDialog dialog = new MaterialAlertDialogBuilder(this)
                 .setTitle(cat == null ? "新增猫咪" : "编辑猫咪")
                 .setView(form)
                 .setNegativeButton("取消", null)
-                .setPositiveButton("保存", (dialog, which) -> {
+                .setPositiveButton("保存", null)
+                .show();
+        dialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
                     CatWriteRequest request = catRequest(nameInput, breedInput, birthdayInput, statusInput, personalityInput, photoInput, notesInput);
                     if (request == null) {
                         return;
                     }
                     if (cat == null) {
-                        createCat(request);
+                        createCat(request, dialog);
                     } else {
-                        updateCat(cat.catId, request, "猫咪信息已更新");
+                        updateCat(cat.catId, request, "猫咪信息已更新", dialog);
                     }
-                })
-                .show();
+                });
     }
 
     private CatWriteRequest catRequest(TextInputEditText nameInput, TextInputEditText breedInput, TextInputEditText birthdayInput,
@@ -157,10 +159,11 @@ public class AdminCatsActivity extends AdminListActivityBase {
         return new CatWriteRequest(name, breed, birthday, statusInput.getSelectedItemPosition(), personality, photo, notes);
     }
 
-    private void createCat(CatWriteRequest request) {
+    private void createCat(CatWriteRequest request, AlertDialog dialog) {
         NetworkHelper.enqueue(this, ApiClient.getService(this).adminCreateCat(request), new ApiCallback<CatDetail>() {
             @Override
             public void onSuccess(CatDetail data) {
+                dialog.dismiss();
                 toast("猫咪已新增");
                 loadData();
             }
@@ -173,9 +176,16 @@ public class AdminCatsActivity extends AdminListActivityBase {
     }
 
     private void updateCat(long catId, CatWriteRequest request, String successMessage) {
+        updateCat(catId, request, successMessage, null);
+    }
+
+    private void updateCat(long catId, CatWriteRequest request, String successMessage, AlertDialog dialog) {
         NetworkHelper.enqueue(this, ApiClient.getService(this).adminUpdateCat(catId, request), new ApiCallback<CatDetail>() {
             @Override
             public void onSuccess(CatDetail data) {
+                if (dialog != null) {
+                    dialog.dismiss();
+                }
                 toast(successMessage);
                 loadData();
             }
@@ -217,10 +227,12 @@ public class AdminCatsActivity extends AdminListActivityBase {
         layout.setLayoutParams(new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         TextInputEditText input = new TextInputEditText(this);
         input.setText(value == null ? "" : value);
+        input.setTextColor(getColor(R.color.cat_text));
         input.setSingleLine(!multiLine);
         if (multiLine) {
             input.setMinLines(2);
             input.setMaxLines(4);
+            input.setGravity(android.view.Gravity.TOP | android.view.Gravity.START);
         }
         layout.addView(input);
         form.addView(layout);

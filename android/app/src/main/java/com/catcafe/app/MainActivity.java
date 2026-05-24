@@ -17,14 +17,17 @@ import com.catcafe.app.network.ApiCallback;
 import com.catcafe.app.network.ApiClient;
 import com.catcafe.app.network.NetworkHelper;
 import com.catcafe.app.ui.ActivityFragment;
+import com.catcafe.app.ui.AdminModuleFragment;
 import com.catcafe.app.ui.HomeFragment;
 import com.catcafe.app.ui.MineFragment;
 import com.catcafe.app.ui.ServiceFragment;
+import com.google.android.material.button.MaterialButton;
 import com.google.android.material.bottomnavigation.BottomNavigationView;
 
 public class MainActivity extends AppCompatActivity {
     private SessionManager sessionManager;
     private BottomNavigationView bottomNav;
+    private MaterialButton adminLogoutButton;
     private Boolean adminNavigationMode;
 
     @Override
@@ -35,9 +38,13 @@ public class MainActivity extends AppCompatActivity {
         applyStatusBarInset();
 
         bottomNav = findViewById(R.id.bottomNav);
-        configureNavigationForRole();
+        adminLogoutButton = findViewById(R.id.adminLogoutButton);
+        adminLogoutButton.setOnClickListener(v -> exitAdminMode());
         bottomNav.setOnItemSelectedListener(item -> {
             int id = item.getItemId();
+            if (sessionManager.isAdmin()) {
+                return showAdminModule(id);
+            }
             if (id == R.id.nav_home) {
                 showFragment(new HomeFragment());
                 return true;
@@ -53,9 +60,10 @@ public class MainActivity extends AppCompatActivity {
             }
             return false;
         });
+        configureNavigationForRole();
 
         if (savedInstanceState == null) {
-            bottomNav.setSelectedItemId(R.id.nav_home);
+            bottomNav.setSelectedItemId(sessionManager.isAdmin() ? R.id.nav_admin_comments : R.id.nav_home);
         }
         verifyTokenIfNeeded();
     }
@@ -101,20 +109,49 @@ public class MainActivity extends AppCompatActivity {
         int selectedId = bottomNav.getSelectedItemId();
         Menu menu = bottomNav.getMenu();
         menu.clear();
-        bottomNav.inflateMenu(R.menu.bottom_nav_menu);
         if (adminMode) {
-            menu.removeItem(R.id.nav_activity);
-            menu.findItem(R.id.nav_service).setTitle("管理");
+            bottomNav.inflateMenu(R.menu.bottom_nav_admin_menu);
+        } else {
+            bottomNav.inflateMenu(R.menu.bottom_nav_menu);
         }
+        adminLogoutButton.setVisibility(adminMode ? View.VISIBLE : View.GONE);
 
         adminNavigationMode = adminMode;
-        if (selectedId == R.id.nav_activity && adminMode) {
-            selectedId = R.id.nav_service;
-        }
         if (selectedId == 0 || menu.findItem(selectedId) == null) {
-            selectedId = R.id.nav_home;
+            selectedId = adminMode ? R.id.nav_admin_comments : R.id.nav_home;
         }
         bottomNav.setSelectedItemId(selectedId);
+        if (adminMode && selectedId == R.id.nav_admin_comments) {
+            showAdminModule(selectedId);
+        }
+    }
+
+    private boolean showAdminModule(int id) {
+        if (id == R.id.nav_admin_comments) {
+            showFragment(AdminModuleFragment.newInstance(AdminModuleFragment.MODULE_COMMENTS));
+            return true;
+        } else if (id == R.id.nav_admin_orders) {
+            showFragment(AdminModuleFragment.newInstance(AdminModuleFragment.MODULE_ORDERS));
+            return true;
+        } else if (id == R.id.nav_admin_products) {
+            showFragment(AdminModuleFragment.newInstance(AdminModuleFragment.MODULE_PRODUCTS));
+            return true;
+        } else if (id == R.id.nav_admin_cats) {
+            showFragment(AdminModuleFragment.newInstance(AdminModuleFragment.MODULE_CATS));
+            return true;
+        } else if (id == R.id.nav_admin_users) {
+            showFragment(AdminModuleFragment.newInstance(AdminModuleFragment.MODULE_USERS));
+            return true;
+        }
+        return false;
+    }
+
+    private void exitAdminMode() {
+        sessionManager.clear();
+        adminNavigationMode = null;
+        configureNavigationForRole();
+        showFragment(new HomeFragment());
+        bottomNav.setSelectedItemId(R.id.nav_home);
     }
 
     private void applyStatusBarInset() {

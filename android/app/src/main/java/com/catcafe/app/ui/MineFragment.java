@@ -37,6 +37,7 @@ public class MineFragment extends Fragment {
     private TextView userIdText;
     private TextView userPhoneText;
     private MaterialButton profileButton;
+    private MaterialButton passwordButton;
     private MaterialButton deleteAccountButton;
 
     @Nullable
@@ -58,7 +59,7 @@ public class MineFragment extends Fragment {
         MaterialButton registerButton = view.findViewById(R.id.mineRegisterButton);
         MaterialButton logoutButton = view.findViewById(R.id.mineLogoutButton);
         profileButton = view.findViewById(R.id.mineProfileButton);
-        MaterialButton passwordButton = view.findViewById(R.id.minePasswordButton);
+        passwordButton = view.findViewById(R.id.minePasswordButton);
         deleteAccountButton = view.findViewById(R.id.mineDeleteAccountButton);
 
         loginButton.setOnClickListener(v ->
@@ -99,6 +100,7 @@ public class MineFragment extends Fragment {
         userIdText.setText(String.valueOf(sessionManager.getUserId()));
         userPhoneText.setText(emptyToDefault(sessionManager.getUserPhone(), "未设置"));
         profileButton.setVisibility(sessionManager.isAdmin() ? View.GONE : View.VISIBLE);
+        passwordButton.setVisibility(sessionManager.isAdmin() ? View.GONE : View.VISIBLE);
         deleteAccountButton.setVisibility(sessionManager.isAdmin() ? View.GONE : View.VISIBLE);
         loadAvatar(sessionManager.getUserAvatar());
         refreshUserDetail();
@@ -117,6 +119,7 @@ public class MineFragment extends Fragment {
                 userIdText.setText(String.valueOf(data.userId));
                 userPhoneText.setText(emptyToDefault(data.userPhone, "未设置"));
                 profileButton.setVisibility(data.userType == 1 ? View.GONE : View.VISIBLE);
+                passwordButton.setVisibility(data.userType == 1 ? View.GONE : View.VISIBLE);
                 deleteAccountButton.setVisibility(data.userType == 1 ? View.GONE : View.VISIBLE);
                 loadAvatar(data.userAvatar);
             }

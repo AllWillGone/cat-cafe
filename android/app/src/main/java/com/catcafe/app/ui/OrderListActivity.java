@@ -1,18 +1,24 @@
 package com.catcafe.app.ui;
 
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
+import android.view.Gravity;
 import android.view.ViewGroup;
+import android.widget.ImageView;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import androidx.appcompat.app.AlertDialog;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.bumptech.glide.Glide;
 import com.catcafe.app.R;
 import com.catcafe.app.model.BatchOrderResponse;
 import com.catcafe.app.model.OrderDetailItem;
@@ -71,6 +77,57 @@ public class OrderListActivity extends BaseToolbarActivity implements OrderAdapt
     }
 
     @Override
+    public void onPay(BatchOrderResponse order) {
+        if (order.orderStatus != 0) {
+            Toast.makeText(this, "只能支付未支付订单", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        String batchNo = order.batchNo == null ? "N/A" : order.batchNo;
+        String amount = order.totalAmount == null ? "0" : order.totalAmount.toPlainString();
+        String qrCodeUrl = "https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=PAY_"
+                + batchNo + "_" + amount;
+
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        content.setGravity(Gravity.CENTER_HORIZONTAL);
+        int padding = getResources().getDimensionPixelSize(R.dimen.order_dialog_padding);
+        content.setPadding(padding, 0, padding, 0);
+
+        ImageView qrCode = new ImageView(this);
+        int size = Math.round(200 * getResources().getDisplayMetrics().density);
+        qrCode.setLayoutParams(new LinearLayout.LayoutParams(size, size));
+        qrCode.setScaleType(ImageView.ScaleType.CENTER_CROP);
+        Glide.with(this)
+                .load(qrCodeUrl)
+                .placeholder(R.drawable.ic_image_placeholder)
+                .error(R.drawable.ic_image_placeholder)
+                .into(qrCode);
+        content.addView(qrCode);
+
+        TextView batchText = new TextView(this);
+        batchText.setGravity(Gravity.CENTER);
+        batchText.setTextColor(getColor(R.color.cat_muted));
+        batchText.setTextSize(13);
+        batchText.setText("批次号: " + ellipsizeBatchNo(batchNo));
+        content.addView(batchText);
+
+        TextView amountText = new TextView(this);
+        amountText.setGravity(Gravity.CENTER);
+        amountText.setTextColor(getColor(R.color.cat_text));
+        amountText.setTextSize(20);
+        amountText.setTypeface(null, android.graphics.Typeface.BOLD);
+        amountText.setText(UiText.price(order.totalAmount));
+        content.addView(amountText);
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("扫码支付")
+                .setView(content)
+                .setPositiveButton("完成", null)
+                .show();
+    }
+
+    @Override
     public void onEdit(BatchOrderResponse order) {
         if (order.orderStatus != 0) {
             Toast.makeText(this, "只能修改未支付订单", Toast.LENGTH_SHORT).show();
@@ -86,21 +143,25 @@ public class OrderListActivity extends BaseToolbarActivity implements OrderAdapt
         TextInputEditText phoneInput = addInput(form, "手机号", order.userPhone, false);
         TextInputEditText noteInput = addInput(form, "备注", order.orderNote, true);
 
-        new MaterialAlertDialogBuilder(this)
+        AlertDialog editDialog = new MaterialAlertDialogBuilder(this)
                 .setTitle("编辑订单")
                 .setView(form)
-                .setNegativeButton("取消", null)
-                .setPositiveButton("保存", (dialog, which) -> {
-                    String userName = textOf(nameInput);
-                    String userPhone = textOf(phoneInput);
-                    if (userName.isEmpty() || userPhone.isEmpty()) {
-                        Toast.makeText(this, "请填写联系人和手机号", Toast.LENGTH_SHORT).show();
-                        return;
-                    }
-                    OrderUpdateRequest request = new OrderUpdateRequest(null, userPhone, userName, textOf(noteInput));
-                    updateBatch(order, request);
-                })
+                .setNegativeButton("关闭", null)
+                .setNeutralButton("取消订单", null)
+                .setPositiveButton("保存", null)
                 .show();
+        editDialog.getButton(DialogInterface.BUTTON_NEUTRAL).setTextColor(getColor(R.color.like_red));
+        editDialog.getButton(DialogInterface.BUTTON_NEUTRAL).setOnClickListener(v -> confirmCancelOrder(order, editDialog));
+        editDialog.getButton(AlertDialog.BUTTON_POSITIVE).setOnClickListener(v -> {
+            String userName = textOf(nameInput);
+            String userPhone = textOf(phoneInput);
+            if (userName.isEmpty() || userPhone.isEmpty()) {
+                Toast.makeText(this, "请填写联系人和手机号", Toast.LENGTH_SHORT).show();
+                return;
+            }
+            OrderUpdateRequest request = new OrderUpdateRequest(null, userPhone, userName, textOf(noteInput));
+            updateBatch(order, request, editDialog);
+        });
     }
 
     @Override
@@ -164,12 +225,65 @@ public class OrderListActivity extends BaseToolbarActivity implements OrderAdapt
     }
 
     private void updateBatch(BatchOrderResponse order, OrderUpdateRequest request) {
+        updateBatch(order, request, null);
+    }
+
+    private void updateBatch(BatchOrderResponse order, OrderUpdateRequest request, AlertDialog dialog) {
         List<Long> orderIds = orderIdsOf(order);
         if (orderIds.isEmpty()) {
             Toast.makeText(this, "订单明细为空", Toast.LENGTH_SHORT).show();
             return;
         }
-        updateNext(orderIds, 0, request);
+        NetworkHelper.enqueue(this, ApiClient.getService(this).updateOrder(orderIds.get(0), request), new ApiCallback<BatchOrderResponse>() {
+            @Override
+            public void onSuccess(BatchOrderResponse data) {
+                if (dialog != null) {
+                    dialog.dismiss();
+                }
+                Toast.makeText(OrderListActivity.this, "订单已更新", Toast.LENGTH_SHORT).show();
+                loadOrders();
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(OrderListActivity.this, message, Toast.LENGTH_SHORT).show();
+                loadOrders();
+            }
+        });
+    }
+
+    private void confirmCancelOrder(BatchOrderResponse order, AlertDialog editDialog) {
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("取消订单")
+                .setMessage("取消后将恢复库存，订单不可继续编辑。")
+                .setNegativeButton("再想想", null)
+                .setPositiveButton("确认取消", (dialog, which) -> {
+                    editDialog.dismiss();
+                    cancelBatch(order);
+                })
+                .show();
+    }
+
+    private void cancelBatch(BatchOrderResponse order) {
+        List<Long> orderIds = orderIdsOf(order);
+        if (orderIds.isEmpty()) {
+            Toast.makeText(this, "订单明细为空", Toast.LENGTH_SHORT).show();
+            return;
+        }
+        OrderUpdateRequest request = new OrderUpdateRequest(4, null, null, null);
+        NetworkHelper.enqueue(this, ApiClient.getService(this).updateOrder(orderIds.get(0), request), new ApiCallback<BatchOrderResponse>() {
+            @Override
+            public void onSuccess(BatchOrderResponse data) {
+                Toast.makeText(OrderListActivity.this, "订单已取消", Toast.LENGTH_SHORT).show();
+                loadOrders();
+            }
+
+            @Override
+            public void onError(String message) {
+                Toast.makeText(OrderListActivity.this, message, Toast.LENGTH_SHORT).show();
+                loadOrders();
+            }
+        });
     }
 
     private void updateNext(List<Long> orderIds, int index, OrderUpdateRequest request) {
@@ -198,24 +312,16 @@ public class OrderListActivity extends BaseToolbarActivity implements OrderAdapt
             Toast.makeText(this, "订单明细为空", Toast.LENGTH_SHORT).show();
             return;
         }
-        deleteNext(orderIds, 0);
-    }
-
-    private void deleteNext(List<Long> orderIds, int index) {
-        if (index >= orderIds.size()) {
-            Toast.makeText(this, "订单已删除", Toast.LENGTH_SHORT).show();
-            loadOrders();
-            return;
-        }
-        NetworkHelper.enqueue(this, ApiClient.getService(this).deleteOrder(orderIds.get(index)), new ApiCallback<Map<String, Object>>() {
+        NetworkHelper.enqueue(this, ApiClient.getService(this).deleteOrder(orderIds.get(0)), new ApiCallback<Map<String, Object>>() {
             @Override
             public void onSuccess(Map<String, Object> data) {
-                deleteNext(orderIds, index + 1);
+                Toast.makeText(OrderListActivity.this, "订单已删除", Toast.LENGTH_SHORT).show();
+                loadOrders();
             }
 
             @Override
             public void onError(String message) {
-                Toast.makeText(OrderListActivity.this, "部分订单未删除：" + message, Toast.LENGTH_SHORT).show();
+                Toast.makeText(OrderListActivity.this, message, Toast.LENGTH_SHORT).show();
                 loadOrders();
             }
         });
@@ -232,6 +338,13 @@ public class OrderListActivity extends BaseToolbarActivity implements OrderAdapt
         return orderIds;
     }
 
+    private String ellipsizeBatchNo(String batchNo) {
+        if (batchNo == null || batchNo.length() <= 18) {
+            return batchNo == null ? "" : batchNo;
+        }
+        return batchNo.substring(0, 18) + "...";
+    }
+
     private TextInputEditText addInput(LinearLayout form, String hint, String value, boolean multiLine) {
         TextInputLayout layout = new TextInputLayout(this);
         layout.setHint(hint);
@@ -241,10 +354,12 @@ public class OrderListActivity extends BaseToolbarActivity implements OrderAdapt
 
         TextInputEditText input = new TextInputEditText(this);
         input.setText(value == null ? "" : value);
+        input.setTextColor(getColor(R.color.cat_text));
         input.setSingleLine(!multiLine);
         if (multiLine) {
             input.setMinLines(2);
             input.setMaxLines(3);
+            input.setGravity(android.view.Gravity.TOP | android.view.Gravity.START);
         }
 
         layout.addView(input);

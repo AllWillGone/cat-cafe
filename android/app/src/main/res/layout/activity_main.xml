@@ -14,6 +14,20 @@
         android:background="@color/cat_surface"
         android:layout_marginBottom="72dp" />
 
+    <com.google.android.material.button.MaterialButton
+        android:id="@+id/adminLogoutButton"
+        style="?attr/materialButtonOutlinedStyle"
+        android:layout_width="wrap_content"
+        android:layout_height="40dp"
+        android:layout_gravity="top|end"
+        android:layout_marginTop="12dp"
+        android:layout_marginEnd="12dp"
+        android:minWidth="72dp"
+        android:text="退出"
+        android:textColor="@color/like_red"
+        android:visibility="gone"
+        app:strokeColor="@color/like_red" />
+
     <com.google.android.material.bottomnavigation.BottomNavigationView
         android:id="@+id/bottomNav"
         android:layout_width="match_parent"

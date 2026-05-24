@@ -24,6 +24,8 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.VH> {
     public interface Listener {
         void onDetail(BatchOrderResponse order);
 
+        void onPay(BatchOrderResponse order);
+
         void onEdit(BatchOrderResponse order);
 
         void onDelete(BatchOrderResponse order);
@@ -52,10 +54,13 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.VH> {
         holder.contact.setText(contactSummary(order));
         holder.total.setText(UiText.price(order.totalAmount));
 
+        holder.payButton.setVisibility(order.orderStatus == 0 ? View.VISIBLE : View.GONE);
         holder.editButton.setVisibility(order.orderStatus == 0 ? View.VISIBLE : View.GONE);
         holder.deleteButton.setVisibility(order.orderStatus == 3 || order.orderStatus == 4 ? View.VISIBLE : View.GONE);
         holder.actions.setVisibility(
-                holder.editButton.getVisibility() == View.VISIBLE || holder.deleteButton.getVisibility() == View.VISIBLE
+                holder.payButton.getVisibility() == View.VISIBLE
+                        || holder.editButton.getVisibility() == View.VISIBLE
+                        || holder.deleteButton.getVisibility() == View.VISIBLE
                         ? View.VISIBLE : View.GONE);
 
         holder.itemView.setOnClickListener(v -> {
@@ -66,6 +71,11 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.VH> {
         holder.editButton.setOnClickListener(v -> {
             if (listener != null) {
                 listener.onEdit(order);
+            }
+        });
+        holder.payButton.setOnClickListener(v -> {
+            if (listener != null) {
+                listener.onPay(order);
             }
         });
         holder.deleteButton.setOnClickListener(v -> {
@@ -114,6 +124,7 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.VH> {
         TextView contact;
         TextView total;
         View actions;
+        MaterialButton payButton;
         MaterialButton editButton;
         MaterialButton deleteButton;
 
@@ -125,6 +136,7 @@ public class OrderAdapter extends RecyclerView.Adapter<OrderAdapter.VH> {
             contact = itemView.findViewById(R.id.orderContact);
             total = itemView.findViewById(R.id.orderTotal);
             actions = itemView.findViewById(R.id.orderActions);
+            payButton = itemView.findViewById(R.id.orderPayButton);
             editButton = itemView.findViewById(R.id.orderEditButton);
             deleteButton = itemView.findViewById(R.id.orderDeleteButton);
         }
