@@ -40,6 +40,8 @@ import java.util.List;
 public class ServiceFragment extends Fragment {
     private static final int TAB_PRODUCTS = R.id.tabProducts;
     private static final int TAB_CATS = R.id.tabCats;
+    private static final int SORT_DEFAULT = R.id.sortDefault;
+    private static final int SORT_LIKES = R.id.sortLikes;
 
     private SwipeRefreshLayout refreshLayout;
     private EditText searchInput;
@@ -48,10 +50,15 @@ public class ServiceFragment extends Fragment {
     private TextView cartBadge;
     private RecyclerView ticketList;
     private RecyclerView recyclerView;
+    private View productFilterContainer;
+    private MaterialButtonToggleGroup productCategoryFilters;
+    private MaterialButtonToggleGroup sortGroup;
     private ProductAdapter productAdapter;
     private CatAdapter catAdapter;
     private SessionManager sessionManager;
     private int currentTab = TAB_PRODUCTS;
+    private int currentSort = SORT_DEFAULT;
+    private Integer currentProductCategory = null;
     private android.content.Context appContext;
 
     @Nullable
@@ -71,6 +78,9 @@ public class ServiceFragment extends Fragment {
         cartBadge = view.findViewById(R.id.serviceCartBadge);
         ticketList = view.findViewById(R.id.catCafeTicketList);
         recyclerView = view.findViewById(R.id.serviceList);
+        productFilterContainer = view.findViewById(R.id.productFilterContainer);
+        productCategoryFilters = view.findViewById(R.id.productCategoryFilters);
+        sortGroup = view.findViewById(R.id.serviceSortGroup);
         MaterialButtonToggleGroup tabs = view.findViewById(R.id.serviceTabs);
         MaterialButton cartButton = view.findViewById(R.id.serviceCartButton);
 
@@ -82,11 +92,27 @@ public class ServiceFragment extends Fragment {
         recyclerView.setLayoutManager(new LinearLayoutManager(requireContext()));
 
         tabs.check(TAB_PRODUCTS);
+        productCategoryFilters.check(R.id.filterCategoryAll);
+        sortGroup.check(SORT_DEFAULT);
         tabs.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
             if (!isChecked) {
                 return;
             }
             currentTab = checkedId;
+            loadCurrentTab();
+        });
+        productCategoryFilters.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked) {
+                return;
+            }
+            currentProductCategory = productCategory(checkedId);
+            loadProducts();
+        });
+        sortGroup.addOnButtonCheckedListener((group, checkedId, isChecked) -> {
+            if (!isChecked) {
+                return;
+            }
+            currentSort = checkedId;
             loadCurrentTab();
         });
 
@@ -186,6 +212,7 @@ public class ServiceFragment extends Fragment {
         ticketSectionTitle.setVisibility(View.GONE);
         ticketList.setVisibility(View.GONE);
         catSectionTitle.setVisibility(View.GONE);
+        productFilterContainer.setVisibility(View.GONE);
         searchInput.setHint("搜索猫咪");
     }
 
@@ -193,6 +220,7 @@ public class ServiceFragment extends Fragment {
         ticketSectionTitle.setVisibility(View.GONE);
         ticketList.setVisibility(View.GONE);
         catSectionTitle.setVisibility(View.GONE);
+        productFilterContainer.setVisibility(View.VISIBLE);
         searchInput.setHint("搜索商品");
     }
 
@@ -212,7 +240,7 @@ public class ServiceFragment extends Fragment {
     private void loadProducts() {
         refreshLayout.setRefreshing(true);
         NetworkHelper.enqueue(appContext,
-                ApiClient.getService(appContext).getProducts(null, keyword(), 0, AppConfig.PAGE_LIMIT),
+                ApiClient.getService(appContext).getProducts(currentProductCategory, keyword(), 0, AppConfig.PAGE_LIMIT),
                 new ApiCallback<PaginatedProducts>() {
                     @Override
                     public void onSuccess(PaginatedProducts data) {
@@ -220,7 +248,7 @@ public class ServiceFragment extends Fragment {
                             return;
                         }
                         refreshLayout.setRefreshing(false);
-                        productAdapter.submitList(ProductRules.productsWithoutTickets(data.items));
+                        productAdapter.submitList(sortProducts(ProductRules.productsWithoutTickets(data.items)));
                     }
 
                     @Override
@@ -245,7 +273,7 @@ public class ServiceFragment extends Fragment {
                             return;
                         }
                         refreshLayout.setRefreshing(false);
-                        catAdapter.submitList(sortCatsByLikes(data.items));
+                        catAdapter.submitList(sortCats(data.items));
                     }
 
                     @Override
@@ -269,8 +297,42 @@ public class ServiceFragment extends Fragment {
         return view;
     }
 
-    private List<CatDetail> sortCatsByLikes(List<CatDetail> cats) {
+    private Integer productCategory(int checkedId) {
+        if (checkedId == R.id.filterCategoryService) {
+            return 0;
+        }
+        if (checkedId == R.id.filterCategoryFood) {
+            return 1;
+        }
+        if (checkedId == R.id.filterCategorySupply) {
+            return 2;
+        }
+        return null;
+    }
+
+    private List<ProductDetail> sortProducts(List<ProductDetail> products) {
+        List<ProductDetail> sorted = products == null ? new ArrayList<>() : new ArrayList<>(products);
+        if (currentSort != SORT_LIKES) {
+            return sorted;
+        }
+        Collections.sort(sorted, new Comparator<ProductDetail>() {
+            @Override
+            public int compare(ProductDetail left, ProductDetail right) {
+                int byLikes = Integer.compare(right.likeCount, left.likeCount);
+                if (byLikes != 0) {
+                    return byLikes;
+                }
+                return Long.compare(right.productId, left.productId);
+            }
+        });
+        return sorted;
+    }
+
+    private List<CatDetail> sortCats(List<CatDetail> cats) {
         List<CatDetail> sorted = cats == null ? new ArrayList<>() : new ArrayList<>(cats);
+        if (currentSort != SORT_LIKES) {
+            return sorted;
+        }
         Collections.sort(sorted, new Comparator<CatDetail>() {
             @Override
             public int compare(CatDetail left, CatDetail right) {
@@ -283,4 +345,5 @@ public class ServiceFragment extends Fragment {
         });
         return sorted;
     }
+
 }

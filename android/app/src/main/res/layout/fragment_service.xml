@@ -109,6 +109,92 @@
             android:inputType="text" />
     </com.google.android.material.textfield.TextInputLayout>
 
+    <LinearLayout
+        android:id="@+id/serviceFilterPanel"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:orientation="vertical">
+
+        <HorizontalScrollView
+            android:id="@+id/productFilterContainer"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:scrollbars="none">
+
+            <com.google.android.material.button.MaterialButtonToggleGroup
+                android:id="@+id/productCategoryFilters"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:selectionRequired="true"
+                app:singleSelection="true">
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/filterCategoryAll"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="72dp"
+                    android:text="全部"
+                    app:strokeColor="@color/cat_border" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/filterCategoryService"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="72dp"
+                    android:text="服务"
+                    app:strokeColor="@color/cat_border" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/filterCategoryFood"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="72dp"
+                    android:text="餐饮"
+                    app:strokeColor="@color/cat_border" />
+
+                <com.google.android.material.button.MaterialButton
+                    android:id="@+id/filterCategorySupply"
+                    style="?attr/materialButtonOutlinedStyle"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:minWidth="88dp"
+                    android:text="猫咪用品"
+                    app:strokeColor="@color/cat_border" />
+            </com.google.android.material.button.MaterialButtonToggleGroup>
+        </HorizontalScrollView>
+
+        <com.google.android.material.button.MaterialButtonToggleGroup
+            android:id="@+id/serviceSortGroup"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            app:selectionRequired="true"
+            app:singleSelection="true">
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/sortDefault"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="默认排序"
+                app:strokeColor="@color/cat_border" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/sortLikes"
+                style="?attr/materialButtonOutlinedStyle"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:text="点赞数"
+                app:strokeColor="@color/cat_border" />
+        </com.google.android.material.button.MaterialButtonToggleGroup>
+    </LinearLayout>
+
     <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
         android:id="@+id/serviceRefresh"
         android:layout_width="match_parent"
