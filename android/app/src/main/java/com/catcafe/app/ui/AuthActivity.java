@@ -44,14 +44,18 @@ public class AuthActivity extends BaseToolbarActivity {
     private TextInputLayout userNameLayout;
     private TextInputEditText accountInput;
     private TextInputEditText phoneInput;
+    private TextInputEditText smsCodeInput;
     private TextInputEditText passwordInput;
     private TextInputEditText confirmInput;
     private TextInputEditText userNameInput;
     private MaterialButton submitButton;
     private MaterialButton switchButton;
     private MaterialButton forgotPasswordButton;
+    private MaterialButton sendSmsButton;
+    private View smsCodeRow;
     private SessionManager sessionManager;
     private CountDownTimer smsCountdownTimer;
+    private String correctSmsCode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -68,13 +72,17 @@ public class AuthActivity extends BaseToolbarActivity {
         userNameLayout = findViewById(R.id.authUserNameLayout);
         accountInput = findViewById(R.id.authAccountInput);
         phoneInput = findViewById(R.id.authPhoneInput);
+        smsCodeInput = findViewById(R.id.authSmsCodeInput);
         passwordInput = findViewById(R.id.authPasswordInput);
         confirmInput = findViewById(R.id.authConfirmInput);
         userNameInput = findViewById(R.id.authUserNameInput);
         submitButton = findViewById(R.id.authSubmitButton);
         switchButton = findViewById(R.id.authSwitchButton);
         forgotPasswordButton = findViewById(R.id.authForgotPasswordButton);
+        sendSmsButton = findViewById(R.id.authSendSmsButton);
+        smsCodeRow = findViewById(R.id.authSmsCodeRow);
 
+        sendSmsButton.setOnClickListener(v -> sendRegisterSmsCode());
         submitButton.setOnClickListener(v -> submit());
         switchButton.setOnClickListener(v -> {
             registerMode = !registerMode;
@@ -93,10 +101,11 @@ public class AuthActivity extends BaseToolbarActivity {
             if (getSupportActionBar() != null) {
                 getSupportActionBar().setTitle("注册");
             }
-            accountLayout.setVisibility(gone);
-            phoneLayout.setVisibility(visible);
-            confirmLayout.setVisibility(visible);
-            userNameLayout.setVisibility(visible);
+            accountInput.setVisibility(gone);
+            phoneInput.setVisibility(visible);
+            smsCodeRow.setVisibility(visible);
+            confirmInput.setVisibility(visible);
+            userNameInput.setVisibility(visible);
             submitButton.setText("注册");
             forgotPasswordButton.setVisibility(gone);
             switchButton.setText("切换到登录");
@@ -104,10 +113,11 @@ public class AuthActivity extends BaseToolbarActivity {
             if (getSupportActionBar() != null) {
                 getSupportActionBar().setTitle("登录");
             }
-            accountLayout.setVisibility(visible);
-            phoneLayout.setVisibility(gone);
-            confirmLayout.setVisibility(gone);
-            userNameLayout.setVisibility(gone);
+            accountInput.setVisibility(visible);
+            phoneInput.setVisibility(gone);
+            smsCodeRow.setVisibility(gone);
+            confirmInput.setVisibility(gone);
+            userNameInput.setVisibility(gone);
             submitButton.setText("登录");
             forgotPasswordButton.setVisibility(visible);
             switchButton.setText("切换到注册");
@@ -201,6 +211,34 @@ public class AuthActivity extends BaseToolbarActivity {
         if (input.getText() != null) {
             input.setSelection(Math.min(selection, input.getText().length()));
         }
+    }
+
+    private void sendRegisterSmsCode() {
+        String phone = textOf(phoneInput);
+        if (!PHONE_PATTERN.matcher(phone).matches()) {
+            toast("请输入正确手机号");
+            return;
+        }
+        NetworkHelper.enqueue(this,
+                ApiClient.getService(this).sendSmsCode(new SendSmsCodeRequest(phone)),
+                new ApiCallback<Map<String, Object>>() {
+                    @Override
+                    public void onSuccess(Map<String, Object> data) {
+                        Object code = data.get("code");
+                        if (code != null) {
+                            correctSmsCode = String.valueOf(code);
+                            toast("验证码已发送（演示：" + correctSmsCode + "）");
+                        } else {
+                            toast("验证码已发送");
+                        }
+                        startSmsCountdown(sendSmsButton);
+                    }
+
+                    @Override
+                    public void onError(String message) {
+                        toast(message);
+                    }
+                });
     }
 
     private void sendSmsCode(TextInputEditText phoneInput, Button smsButton) {
@@ -308,13 +346,22 @@ public class AuthActivity extends BaseToolbarActivity {
         if (registerMode) {
             String userName = textOf(userNameInput);
             String phone = textOf(phoneInput);
+            String smsCode = textOf(smsCodeInput);
             String confirm = textOf(confirmInput);
             if (userName.isEmpty() || phone.isEmpty()) {
                 toast("请填写用户名和手机号");
                 return;
             }
-            if (phone.length() < 11) {
+            if (!PHONE_PATTERN.matcher(phone).matches()) {
                 toast("请输入正确手机号");
+                return;
+            }
+            if (smsCode.isEmpty()) {
+                toast("请先获取并输入验证码");
+                return;
+            }
+            if (!smsCode.equals(correctSmsCode)) {
+                toast("验证码错误");
                 return;
             }
             if (password.length() < 6) {
