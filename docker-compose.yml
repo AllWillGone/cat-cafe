@@ -1,6 +1,7 @@
 services:
   mysql:
     image: mysql:8.0
+    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     environment:
       MYSQL_ROOT_PASSWORD: yang
       MYSQL_DATABASE: cat_cafe
@@ -9,7 +10,7 @@ services:
     volumes:
       - mysql_data:/var/lib/mysql
       - ./database/init.sql:/docker-entrypoint-initdb.d/01-init.sql
-      - ./database/seed_demo_media.sql:/docker-entrypoint-initdb.d/02-seed.sql
+      - ./database/seed_all.sql:/docker-entrypoint-initdb.d/02-seed.sql
     healthcheck:
       test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       interval: 5s

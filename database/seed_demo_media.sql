@@ -1,4 +1,4 @@
-﻿USE cat_cafe;
+USE cat_cafe;
 
 UPDATE catinformation
 SET catName = 'Mimi',
