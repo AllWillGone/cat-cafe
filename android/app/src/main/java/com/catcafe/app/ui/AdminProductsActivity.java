@@ -2,18 +2,22 @@ package com.catcafe.app.ui;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Typeface;
 import android.text.Editable;
 import android.text.TextWatcher;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.RadioButton;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 
+import com.bumptech.glide.Glide;
 import com.catcafe.app.R;
 import com.catcafe.app.core.AppConfig;
 import com.catcafe.app.model.PaginatedProducts;
@@ -24,11 +28,16 @@ import com.catcafe.app.network.ApiClient;
 import com.catcafe.app.network.NetworkHelper;
 import com.catcafe.app.util.UiText;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.card.MaterialCardView;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
 import java.math.BigDecimal;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 
 public class AdminProductsActivity extends AdminListActivityBase {
@@ -94,6 +103,14 @@ public class AdminProductsActivity extends AdminListActivityBase {
     }
 
     private void bindProduct(AdminManageAdapter.VH holder, ProductDetail product) {
+        holder.image.setVisibility(View.VISIBLE);
+        Glide.with(this)
+                .load(AppConfig.buildImageUrl(product.imageUrl))
+                .placeholder(R.drawable.ic_image_placeholder)
+                .error(R.drawable.ic_image_placeholder)
+                .into(holder.image);
+        holder.badge.setVisibility(View.VISIBLE);
+        holder.badge.setText(UiText.productStatus(product.status));
         holder.title.setText(product.productName);
         holder.meta.setText("#" + product.productId + " · " + UiText.productCategory(product.category) + " · " + UiText.productStatus(product.status));
         holder.body.setText(UiText.productPrice(product) + " · 库存 " + product.stockQuantity);
@@ -113,9 +130,68 @@ public class AdminProductsActivity extends AdminListActivityBase {
             }
         });
 
+        holder.secondaryButton.setOnClickListener(v -> showStatusDialog(product));
         holder.dangerButton.setVisibility(View.VISIBLE);
         holder.dangerButton.setText("删除");
         holder.dangerButton.setOnClickListener(v -> confirmDelete(product));
+    }
+
+    private void showStatusDialog(ProductDetail product) {
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        int padding = getResources().getDimensionPixelSize(R.dimen.order_dialog_padding);
+        content.setPadding(padding, 0, padding, 0);
+
+        TextView summary = new TextView(this);
+        summary.setText(product.productName + "\n" + UiText.productPrice(product));
+        summary.setTextColor(getColor(R.color.cat_muted));
+        summary.setTextSize(13);
+        content.addView(summary);
+
+        final int[] selectedStatus = {Math.max(0, Math.min(product.status, 1))};
+        ChipGroup chips = new ChipGroup(this);
+        chips.setSingleSelection(true);
+        chips.setSelectionRequired(true);
+        LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        chipParams.topMargin = dp(10);
+        chips.setLayoutParams(chipParams);
+        content.addView(chips);
+        addStatusChip(chips, "\u5df2\u4e0b\u67b6", 0, selectedStatus);
+        addStatusChip(chips, "\u5728\u552e", 1, selectedStatus);
+        updateChoiceChips(chips, selectedStatus[0]);
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("\u4fee\u6539\u5546\u54c1\u72b6\u6001")
+                .setView(content)
+                .setNegativeButton("\u53d6\u6d88", null)
+                .setPositiveButton("\u4fdd\u5b58", (dialog, which) -> {
+                    if (selectedStatus[0] == product.status) {
+                        return;
+                    }
+                    if (selectedStatus[0] == 0) {
+                        delistProduct(product);
+                    } else {
+                        updateProduct(product.productId, new ProductWriteRequest(null, null, null, null, null, null, 1), "\u5546\u54c1\u5df2\u4e0a\u67b6");
+                    }
+                })
+                .show();
+    }
+
+    private void addStatusChip(ChipGroup chips, String label, int status, int[] selectedStatus) {
+        Chip chip = new Chip(this);
+        chip.setText(label);
+        chip.setCheckable(true);
+        chip.setClickable(true);
+        chip.setTextColor(getColor(R.color.cat_text));
+        chip.setChipStrokeWidth(dp(1));
+        chip.setOnClickListener(v -> {
+            selectedStatus[0] = status;
+            updateChoiceChips(chips, status);
+        });
+        chips.addView(chip);
+        if (status == selectedStatus[0]) {
+            chip.setChecked(true);
+        }
     }
 
     private void showForm(ProductDetail product) {
@@ -123,6 +199,12 @@ public class AdminProductsActivity extends AdminListActivityBase {
         form.setOrientation(LinearLayout.VERTICAL);
         int padding = getResources().getDimensionPixelSize(R.dimen.order_dialog_padding);
         form.setPadding(padding, 0, padding, 0);
+        TextView formMarker = new TextView(this);
+        formMarker.setText("\u5f53\u524d\u7248\u672c\uff1a\u5361\u7247\u5f0f\u5546\u54c1\u7f16\u8f91");
+        formMarker.setTextColor(getColor(R.color.cat_primary_dark));
+        formMarker.setTextSize(13);
+        formMarker.setTypeface(null, Typeface.BOLD);
+        form.addView(formMarker);
         TextInputEditText nameInput = addInput(form, "名称", product == null ? "" : product.productName, false);
         Spinner categoryInput = addSpinner(form, "分类", new String[]{"服务", "餐饮", "猫咖用品"}, product == null ? 0 : product.category);
         TextInputEditText priceInput = addInput(form, "价格", product == null || product.price == null ? "" : product.price.toPlainString(), false);
@@ -315,12 +397,103 @@ public class AdminProductsActivity extends AdminListActivityBase {
     }
 
     private Spinner addSpinner(LinearLayout form, String label, String[] options, int selected) {
+        TextView title = new TextView(this);
+        title.setText(label);
+        title.setTextColor(getColor(R.color.cat_muted));
+        title.setTextSize(13);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        titleParams.topMargin = dp(10);
+        title.setLayoutParams(titleParams);
+        form.addView(title);
+
         Spinner spinner = new Spinner(this);
         spinner.setAdapter(new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, options));
         spinner.setSelection(Math.max(0, Math.min(selected, options.length - 1)));
         spinner.setPrompt(label);
+        spinner.setVisibility(View.GONE);
         form.addView(spinner);
+
+        int selectedIndex = spinner.getSelectedItemPosition();
+        List<MaterialCardView> cards = new ArrayList<>();
+        List<RadioButton> radioButtons = new ArrayList<>();
+        for (int i = 0; i < options.length; i++) {
+            final int index = i;
+            form.addView(createChoiceCard(options[i], index, spinner, cards, radioButtons));
+        }
+        applyChoiceSelection(cards, radioButtons, selectedIndex);
         return spinner;
+    }
+
+    private MaterialCardView createChoiceCard(String label,
+                                              int index,
+                                              Spinner spinner,
+                                              List<MaterialCardView> cards,
+                                              List<RadioButton> radioButtons) {
+        MaterialCardView card = new MaterialCardView(this);
+        LinearLayout.LayoutParams cardParams = new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT
+        );
+        cardParams.topMargin = dp(8);
+        card.setLayoutParams(cardParams);
+        card.setRadius(dp(8));
+        card.setCardElevation(0);
+        card.setStrokeWidth(dp(1));
+        card.setClickable(true);
+
+        LinearLayout row = new LinearLayout(this);
+        row.setOrientation(LinearLayout.HORIZONTAL);
+        row.setPadding(dp(12), dp(10), dp(12), dp(10));
+        row.setGravity(android.view.Gravity.CENTER_VERTICAL);
+
+        RadioButton radioButton = new RadioButton(this);
+        radioButton.setClickable(false);
+        radioButton.setFocusable(false);
+        row.addView(radioButton);
+
+        TextView text = new TextView(this);
+        text.setText(label);
+        text.setTextColor(getColor(R.color.cat_text));
+        text.setTextSize(15);
+        text.setTypeface(null, Typeface.BOLD);
+        LinearLayout.LayoutParams textParams = new LinearLayout.LayoutParams(0, LinearLayout.LayoutParams.WRAP_CONTENT, 1f);
+        textParams.leftMargin = dp(8);
+        text.setLayoutParams(textParams);
+        row.addView(text);
+
+        card.addView(row);
+        card.setOnClickListener(v -> {
+            spinner.setSelection(index);
+            applyChoiceSelection(cards, radioButtons, index);
+        });
+
+        cards.add(card);
+        radioButtons.add(radioButton);
+        return card;
+    }
+
+    private void applyChoiceSelection(List<MaterialCardView> cards, List<RadioButton> radioButtons, int selectedIndex) {
+        for (int i = 0; i < cards.size(); i++) {
+            boolean selected = i == selectedIndex;
+            cards.get(i).setCardBackgroundColor(getColor(selected ? R.color.cat_surface_alt : R.color.white));
+            cards.get(i).setStrokeColor(getColor(selected ? R.color.cat_primary : R.color.cat_border));
+            radioButtons.get(i).setChecked(selected);
+        }
+    }
+
+    private void updateChoiceChips(ChipGroup chips, int selectedIndex) {
+        for (int i = 0; i < chips.getChildCount(); i++) {
+            View child = chips.getChildAt(i);
+            if (child instanceof Chip) {
+                Chip chip = (Chip) child;
+                chip.setChipStrokeColorResource(i == selectedIndex ? R.color.cat_primary : R.color.cat_border);
+                chip.setChipBackgroundColorResource(i == selectedIndex ? R.color.cat_surface_alt : R.color.white);
+            }
+        }
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     private String textOf(TextInputEditText input) {

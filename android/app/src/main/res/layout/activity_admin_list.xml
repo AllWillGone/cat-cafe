@@ -19,10 +19,28 @@
         android:orientation="vertical"
         android:padding="12dp">
 
+        <HorizontalScrollView
+            android:id="@+id/adminFilterScroll"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:overScrollMode="never"
+            android:scrollbars="none">
+
+            <com.google.android.material.chip.ChipGroup
+                android:id="@+id/adminFilterChips"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                app:chipSpacingHorizontal="8dp"
+                app:selectionRequired="true"
+                app:singleLine="true"
+                app:singleSelection="true" />
+        </HorizontalScrollView>
+
         <Spinner
             android:id="@+id/adminFilterSpinner"
             android:layout_width="match_parent"
-            android:layout_height="48dp" />
+            android:layout_height="48dp"
+            android:visibility="gone" />
 
         <LinearLayout
             android:layout_width="match_parent"

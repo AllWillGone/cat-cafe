@@ -17,6 +17,8 @@ import com.catcafe.app.R;
 import com.catcafe.app.core.AppConfig;
 import com.catcafe.app.core.SessionManager;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
 
@@ -24,6 +26,7 @@ public abstract class AdminListActivityBase extends BaseToolbarActivity {
     protected SwipeRefreshLayout refreshLayout;
     protected RecyclerView recyclerView;
     protected Spinner filterSpinner;
+    protected ChipGroup filterChips;
     protected TextInputEditText keywordInput;
     protected TextInputLayout keywordLayout;
     protected MaterialButton addButton;
@@ -49,6 +52,7 @@ public abstract class AdminListActivityBase extends BaseToolbarActivity {
         refreshLayout = findViewById(R.id.adminRefresh);
         recyclerView = findViewById(R.id.adminRecycler);
         filterSpinner = findViewById(R.id.adminFilterSpinner);
+        filterChips = findViewById(R.id.adminFilterChips);
         keywordInput = findViewById(R.id.adminKeywordInput);
         keywordLayout = findViewById(R.id.adminKeywordLayout);
         addButton = findViewById(R.id.adminAddButton);
@@ -99,6 +103,27 @@ public abstract class AdminListActivityBase extends BaseToolbarActivity {
 
     protected void setFilterLabels(String[] labels) {
         filterSpinner.setAdapter(new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, labels));
+        filterChips.removeAllViews();
+        for (int i = 0; i < labels.length; i++) {
+            Chip chip = new Chip(this);
+            chip.setText(labels[i]);
+            chip.setCheckable(true);
+            chip.setClickable(true);
+            chip.setId(View.generateViewId());
+            chip.setTextColor(getColor(R.color.cat_text));
+            chip.setChipBackgroundColorResource(i == 0 ? R.color.cat_surface_alt : R.color.white);
+            chip.setChipStrokeColorResource(R.color.cat_border);
+            chip.setChipStrokeWidth(dp(1));
+            final int selectedIndex = i;
+            chip.setOnClickListener(v -> {
+                filterSpinner.setSelection(selectedIndex);
+                updateFilterChipStyle(selectedIndex);
+            });
+            filterChips.addView(chip);
+            if (i == 0) {
+                chip.setChecked(true);
+            }
+        }
     }
 
     protected String keyword() {
@@ -125,5 +150,20 @@ public abstract class AdminListActivityBase extends BaseToolbarActivity {
 
     protected void toast(String message) {
         Toast.makeText(this, message, Toast.LENGTH_SHORT).show();
+    }
+
+    private void updateFilterChipStyle(int selectedIndex) {
+        for (int i = 0; i < filterChips.getChildCount(); i++) {
+            View child = filterChips.getChildAt(i);
+            if (child instanceof Chip) {
+                Chip chip = (Chip) child;
+                chip.setChipBackgroundColorResource(i == selectedIndex ? R.color.cat_surface_alt : R.color.white);
+                chip.setChipStrokeColorResource(i == selectedIndex ? R.color.cat_primary : R.color.cat_border);
+            }
+        }
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 }

@@ -9,11 +9,13 @@ import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 
+import com.bumptech.glide.Glide;
 import com.catcafe.app.R;
 import com.catcafe.app.core.AppConfig;
 import com.catcafe.app.model.CatDetail;
@@ -24,6 +26,8 @@ import com.catcafe.app.network.ApiClient;
 import com.catcafe.app.network.NetworkHelper;
 import com.catcafe.app.util.UiText;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -84,6 +88,14 @@ public class AdminCatsActivity extends AdminListActivityBase {
     }
 
     private void bindCat(AdminManageAdapter.VH holder, CatDetail cat) {
+        holder.image.setVisibility(View.VISIBLE);
+        Glide.with(this)
+                .load(AppConfig.buildImageUrl(cat.photoUrl))
+                .placeholder(R.drawable.ic_image_placeholder)
+                .error(R.drawable.ic_image_placeholder)
+                .into(holder.image);
+        holder.badge.setVisibility(View.VISIBLE);
+        holder.badge.setText(UiText.catStatus(cat.status));
         holder.title.setText(cat.catName);
         holder.meta.setText("#" + cat.catId + " · " + cat.breed + " · " + UiText.catStatus(cat.status));
         holder.body.setText("生日 " + cat.birthday + "\n" + cat.personality);
@@ -99,9 +111,66 @@ public class AdminCatsActivity extends AdminListActivityBase {
                 new CatWriteRequest(null, null, null, cat.status == 1 ? 0 : 1, null, null, null),
                 "状态已更新"));
 
+        holder.secondaryButton.setOnClickListener(v -> showStatusDialog(cat));
         holder.dangerButton.setVisibility(View.VISIBLE);
         holder.dangerButton.setText("删除");
         holder.dangerButton.setOnClickListener(v -> confirmDelete(cat));
+    }
+
+    private void showStatusDialog(CatDetail cat) {
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        int padding = getResources().getDimensionPixelSize(R.dimen.order_dialog_padding);
+        content.setPadding(padding, 0, padding, 0);
+
+        TextView summary = new TextView(this);
+        summary.setText(cat.catName + "\n" + cat.breed);
+        summary.setTextColor(getColor(R.color.cat_muted));
+        summary.setTextSize(13);
+        content.addView(summary);
+
+        final int[] selectedStatus = {Math.max(0, Math.min(cat.status, 1))};
+        ChipGroup chips = new ChipGroup(this);
+        chips.setSingleSelection(true);
+        chips.setSelectionRequired(true);
+        LinearLayout.LayoutParams chipParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        chipParams.topMargin = dp(10);
+        chips.setLayoutParams(chipParams);
+        content.addView(chips);
+        addStatusChip(chips, "\u4f11\u606f\u4e2d", 0, selectedStatus);
+        addStatusChip(chips, "\u5728\u5c97\u4e2d", 1, selectedStatus);
+        updateChoiceChips(chips, selectedStatus[0]);
+
+        new MaterialAlertDialogBuilder(this)
+                .setTitle("\u4fee\u6539\u732b\u54aa\u72b6\u6001")
+                .setView(content)
+                .setNegativeButton("\u53d6\u6d88", null)
+                .setPositiveButton("\u4fdd\u5b58", (dialog, which) -> {
+                    if (selectedStatus[0] == cat.status) {
+                        return;
+                    }
+                    updateCat(cat.catId,
+                            new CatWriteRequest(null, null, null, selectedStatus[0], null, null, null),
+                            "\u72b6\u6001\u5df2\u66f4\u65b0");
+                })
+                .show();
+    }
+
+    private void addStatusChip(ChipGroup chips, String label, int status, int[] selectedStatus) {
+        Chip chip = new Chip(this);
+        chip.setText(label);
+        chip.setCheckable(true);
+        chip.setClickable(true);
+        chip.setTextColor(getColor(R.color.cat_text));
+        chip.setChipStrokeWidth(dp(1));
+        chip.setOnClickListener(v -> {
+            selectedStatus[0] = status;
+            updateChoiceChips(chips, status);
+        });
+        chips.addView(chip);
+        if (status == selectedStatus[0]) {
+            chip.setChecked(true);
+        }
     }
 
     private void showForm(CatDetail cat) {
@@ -279,11 +348,61 @@ public class AdminCatsActivity extends AdminListActivityBase {
     }
 
     private Spinner addSpinner(LinearLayout form, String[] options, int selected) {
+        TextView title = new TextView(this);
+        title.setText("鐘舵€?");
+        title.setTextColor(getColor(R.color.cat_muted));
+        title.setTextSize(13);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        titleParams.topMargin = dp(10);
+        title.setLayoutParams(titleParams);
+        form.addView(title);
+
         Spinner spinner = new Spinner(this);
         spinner.setAdapter(new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, options));
         spinner.setSelection(Math.max(0, Math.min(selected, options.length - 1)));
+        spinner.setVisibility(View.GONE);
         form.addView(spinner);
+
+        ChipGroup chips = new ChipGroup(this);
+        chips.setSingleSelection(true);
+        chips.setSelectionRequired(true);
+        form.addView(chips);
+        int selectedIndex = spinner.getSelectedItemPosition();
+        for (int i = 0; i < options.length; i++) {
+            Chip chip = new Chip(this);
+            chip.setText(options[i]);
+            chip.setCheckable(true);
+            chip.setClickable(true);
+            chip.setTextColor(getColor(R.color.cat_text));
+            chip.setChipStrokeWidth(dp(1));
+            chip.setChipStrokeColorResource(i == selectedIndex ? R.color.cat_primary : R.color.cat_border);
+            chip.setChipBackgroundColorResource(i == selectedIndex ? R.color.cat_surface_alt : R.color.white);
+            final int index = i;
+            chip.setOnClickListener(v -> {
+                spinner.setSelection(index);
+                updateChoiceChips(chips, index);
+            });
+            chips.addView(chip);
+            if (i == selectedIndex) {
+                chip.setChecked(true);
+            }
+        }
         return spinner;
+    }
+
+    private void updateChoiceChips(ChipGroup chips, int selectedIndex) {
+        for (int i = 0; i < chips.getChildCount(); i++) {
+            View child = chips.getChildAt(i);
+            if (child instanceof Chip) {
+                Chip chip = (Chip) child;
+                chip.setChipStrokeColorResource(i == selectedIndex ? R.color.cat_primary : R.color.cat_border);
+                chip.setChipBackgroundColorResource(i == selectedIndex ? R.color.cat_surface_alt : R.color.white);
+            }
+        }
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     private String textOf(TextInputEditText input) {

@@ -6,10 +6,13 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.LinearLayout;
 import android.widget.Spinner;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AlertDialog;
 
+import com.bumptech.glide.Glide;
 import com.catcafe.app.R;
+import com.catcafe.app.core.AppConfig;
 import com.catcafe.app.core.AppConfig;
 import com.catcafe.app.model.AdminUserListItem;
 import com.catcafe.app.model.AdminUserUpdateRequest;
@@ -17,6 +20,8 @@ import com.catcafe.app.model.PaginatedUsers;
 import com.catcafe.app.network.ApiCallback;
 import com.catcafe.app.network.ApiClient;
 import com.catcafe.app.network.NetworkHelper;
+import com.google.android.material.chip.Chip;
+import com.google.android.material.chip.ChipGroup;
 import com.google.android.material.dialog.MaterialAlertDialogBuilder;
 import com.google.android.material.textfield.TextInputEditText;
 import com.google.android.material.textfield.TextInputLayout;
@@ -63,6 +68,15 @@ public class AdminUsersActivity extends AdminListActivityBase {
     }
 
     private void bindUser(AdminManageAdapter.VH holder, AdminUserListItem user) {
+        holder.image.setVisibility(View.VISIBLE);
+        Glide.with(this)
+                .load(AppConfig.buildImageUrl(user.userAvatar))
+                .placeholder(R.drawable.ic_image_placeholder)
+                .error(R.drawable.ic_image_placeholder)
+                .circleCrop()
+                .into(holder.image);
+        holder.badge.setVisibility(View.VISIBLE);
+        holder.badge.setText(user.userType == 1 ? "\u7ba1\u7406\u5458" : "\u666e\u901a\u7528\u6237");
         holder.title.setText(user.userName);
         holder.meta.setText("#" + user.userId + " · " + (user.userType == 1 ? "管理员" : "普通用户"));
         holder.body.setText("手机号：" + empty(user.userPhone, "未设置") + " · 性别：" + genderText(user.gender));
@@ -167,11 +181,61 @@ public class AdminUsersActivity extends AdminListActivityBase {
     }
 
     private Spinner addSpinner(LinearLayout form, String[] options, int selected) {
+        TextView title = new TextView(this);
+        title.setText("鎬у埆");
+        title.setTextColor(getColor(R.color.cat_muted));
+        title.setTextSize(13);
+        LinearLayout.LayoutParams titleParams = new LinearLayout.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT);
+        titleParams.topMargin = dp(10);
+        title.setLayoutParams(titleParams);
+        form.addView(title);
+
         Spinner spinner = new Spinner(this);
         spinner.setAdapter(new android.widget.ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, options));
         spinner.setSelection(Math.max(0, Math.min(selected, options.length - 1)));
+        spinner.setVisibility(View.GONE);
         form.addView(spinner);
+
+        ChipGroup chips = new ChipGroup(this);
+        chips.setSingleSelection(true);
+        chips.setSelectionRequired(true);
+        form.addView(chips);
+        int selectedIndex = spinner.getSelectedItemPosition();
+        for (int i = 0; i < options.length; i++) {
+            Chip chip = new Chip(this);
+            chip.setText(options[i]);
+            chip.setCheckable(true);
+            chip.setClickable(true);
+            chip.setTextColor(getColor(R.color.cat_text));
+            chip.setChipStrokeWidth(dp(1));
+            chip.setChipStrokeColorResource(i == selectedIndex ? R.color.cat_primary : R.color.cat_border);
+            chip.setChipBackgroundColorResource(i == selectedIndex ? R.color.cat_surface_alt : R.color.white);
+            final int index = i;
+            chip.setOnClickListener(v -> {
+                spinner.setSelection(index);
+                updateChoiceChips(chips, index);
+            });
+            chips.addView(chip);
+            if (i == selectedIndex) {
+                chip.setChecked(true);
+            }
+        }
         return spinner;
+    }
+
+    private void updateChoiceChips(ChipGroup chips, int selectedIndex) {
+        for (int i = 0; i < chips.getChildCount(); i++) {
+            View child = chips.getChildAt(i);
+            if (child instanceof Chip) {
+                Chip chip = (Chip) child;
+                chip.setChipStrokeColorResource(i == selectedIndex ? R.color.cat_primary : R.color.cat_border);
+                chip.setChipBackgroundColorResource(i == selectedIndex ? R.color.cat_surface_alt : R.color.white);
+            }
+        }
+    }
+
+    private int dp(int value) {
+        return Math.round(value * getResources().getDisplayMetrics().density);
     }
 
     private String textOf(TextInputEditText input) {

@@ -10,6 +10,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import com.catcafe.app.R;
 import com.google.android.material.button.MaterialButton;
+import com.google.android.material.imageview.ShapeableImageView;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -54,6 +55,8 @@ public class AdminManageAdapter<T> extends RecyclerView.Adapter<AdminManageAdapt
 
     public static class VH extends RecyclerView.ViewHolder {
         public final TextView title;
+        public final ShapeableImageView image;
+        public final TextView badge;
         public final TextView meta;
         public final TextView body;
         public final TextView footer;
@@ -65,6 +68,8 @@ public class AdminManageAdapter<T> extends RecyclerView.Adapter<AdminManageAdapt
         VH(@NonNull View itemView) {
             super(itemView);
             title = itemView.findViewById(R.id.adminItemTitle);
+            image = itemView.findViewById(R.id.adminItemImage);
+            badge = itemView.findViewById(R.id.adminItemBadge);
             meta = itemView.findViewById(R.id.adminItemMeta);
             body = itemView.findViewById(R.id.adminItemBody);
             footer = itemView.findViewById(R.id.adminItemFooter);
@@ -76,6 +81,10 @@ public class AdminManageAdapter<T> extends RecyclerView.Adapter<AdminManageAdapt
 
         void reset() {
             title.setText("");
+            image.setVisibility(View.GONE);
+            image.setImageResource(R.drawable.ic_image_placeholder);
+            badge.setText("");
+            badge.setVisibility(View.GONE);
             meta.setText("");
             body.setText("");
             footer.setText("");
